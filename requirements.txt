@@ -5,5 +5,7 @@ sentence-transformers
 pandas
 reportlab
 python-dotenv
-google-genai
 pytest
+fastapi
+uvicorn
+openai
