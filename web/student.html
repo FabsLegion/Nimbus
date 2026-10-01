@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ScholarFlow - Student Workspace</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; overscroll-behavior: none; }
+    h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .pill-OK { background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .pill-MISSING { background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .pill-INVALID { background-color: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+    .pill-WRONG_CATEGORY { background-color: #faf5ff; color: #7c3aed; border: 1px solid #e9d5ff; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col selection:bg-blue-100 selection:text-blue-700">
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-xl font-medium text-sm shadow-xl z-50 transition-all duration-300 pointer-events-none" style="display:none"></div>
+
+<!-- ================= STAGE 1: AUTHENTICATION ================= -->
+<div id="authStage" class="flex-1 flex items-center justify-center p-6">
+  <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+    <div class="text-center mb-6">
+      <div class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white mx-auto mb-3 shadow-md shadow-blue-500/20">
+        <span class="material-symbols-outlined text-[26px]">school</span>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Student Workspace</h1>
+      <p class="text-slate-500 text-sm mt-1">Sign in with your Student ID and PIN or create an account</p>
+    </div>
+
+    <!-- Toggle Buttons -->
+    <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
+      <button type="button" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all bg-white text-slate-900 shadow-sm" id="tabSignInBtn" onclick="switchAuthTab('signin')">Sign In</button>
+      <button type="button" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-slate-500 hover:text-slate-900" id="tabSignUpBtn" onclick="switchAuthTab('signup')">Create Account</button>
+    </div>
+
+    <!-- Sign In Form -->
+    <form id="signInForm" onsubmit="handleSignIn(event)" class="space-y-4">
+      <div>
+        <label for="loginStudentId" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Student ID</label>
+        <input type="text" id="loginStudentId" required placeholder="e.g. STU001 or STU2026" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all">
+      </div>
+      <div>
+        <label for="loginPin" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Security PIN (at least 4 digits)</label>
+        <input type="password" id="loginPin" required minlength="4" placeholder="••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all">
+      </div>
+      <button type="submit" class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm hover:shadow-md hover:shadow-blue-500/20 transition-all">Sign In to Portal</button>
+    </form>
+
+    <!-- Sign Up Form -->
+    <form id="signUpForm" onsubmit="handleSignUp(event)" class="space-y-3.5" style="display:none">
+      <div>
+        <label for="regStudentId" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Student ID *</label>
+        <input type="text" id="regStudentId" required placeholder="e.g. STU005" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+      </div>
+      <div>
+        <label for="regName" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Full Name *</label>
+        <input type="text" id="regName" required placeholder="e.g. Maya Patel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+      </div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div>
+          <label for="regBranch" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Branch *</label>
+          <input type="text" id="regBranch" required placeholder="CS" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+        </div>
+        <div>
+          <label for="regYear" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Year *</label>
+          <input type="text" id="regYear" required placeholder="2nd Year" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div>
+          <label for="regCategory" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Category</label>
+          <select id="regCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+            <option>General</option>
+            <option>OBC</option>
+            <option>SC</option>
+            <option>ST</option>
+            <option>EWS</option>
+          </select>
+        </div>
+        <div>
+          <label for="regLanguage" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Language</label>
+          <select id="regLanguage" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+            <option>English</option>
+            <option>Kannada</option>
+            <option>Hindi</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="regPin" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Security PIN (4+ digits) *</label>
+        <input type="password" id="regPin" required minlength="4" placeholder="••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+      </div>
+      <button type="submit" class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm hover:shadow-md hover:shadow-blue-500/20 transition-all mt-2">Create Account & Enter</button>
+    </form>
+
+    <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+      <a href="/" class="text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        Return to Portal Hub
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STAGE 2: STUDENT PORTAL ================= -->
+<div id="portalStage" class="min-h-screen flex" style="display:none">
+  <!-- Minimal Sidebar Navigation -->
+  <aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 z-40 flex flex-col justify-between py-6 px-4">
+    <div class="flex flex-col gap-6">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 px-2">
+        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
+          <span class="material-symbols-outlined text-[20px]">school</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-display font-bold text-lg text-slate-900 tracking-tight leading-tight">ScholarFlow</span>
+          <span class="text-xs font-medium text-slate-400">Student Portal</span>
+        </div>
+      </div>
+
+      <!-- Student Profile Card in Sidebar -->
+      <div class="bg-slate-50 border border-slate-100 rounded-xl p-3.5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-semibold text-xs flex items-center justify-center" id="profileInitials">
+            ST
+          </div>
+          <div class="flex flex-col overflow-hidden text-left">
+            <span class="text-sm font-bold text-slate-900 truncate" id="profileName">Loading...</span>
+            <span class="text-xs text-slate-500 truncate" id="profileDetails"></span>
+          </div>
+        </div>
+        <div class="mt-2 pt-2 border-t border-slate-200/60 text-[11px] font-semibold text-blue-600 truncate" id="profileScholarship"></div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex flex-col gap-1.5">
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-blue-50 text-blue-600 w-full text-left transition-colors" onclick="switchView('home')" id="navHome">
+          <span class="material-symbols-outlined text-[20px]">dashboard</span>
+          Home
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('assistant')" id="navAssistant">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">smart_toy</span>
+          AI Assistant
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('documents')" id="navDocuments">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">folder_shared</span>
+          Documents
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('timeline')" id="navTimeline">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">calendar_clock</span>
+          Timeline
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('alerts')" id="navAlerts">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">notifications</span>
+          Alerts
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sign Out Footer -->
+    <div class="pt-4 border-t border-slate-100">
+      <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-100 transition-colors">
+        <span class="material-symbols-outlined text-[16px]">logout</span>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Canvas -->
+  <div class="pl-64 flex-1 flex flex-col min-w-0">
+    <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-8">
+      <div class="flex items-center gap-3">
+        <h2 class="font-display font-bold text-lg text-slate-900" id="currentScreenTitle">Overview</h2>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          Aid System Active
+        </span>
+      </div>
+    </header>
+
+    <main class="p-8 max-w-6xl mx-auto w-full flex flex-col gap-6">
+
+      <!-- 1. HOME SCREEN -->
+      <section id="screenHome" class="screen active space-y-6">
+        <!-- Hero Progress Card -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div class="flex items-center gap-5">
+            <div class="relative w-20 h-20 shrink-0">
+              <svg viewBox="0 0 36 36" class="w-20 h-20">
+                <circle cx="18" cy="18" r="15" fill="none" stroke="#f1f5f9" stroke-width="3"/>
+                <circle id="homeArc" cx="18" cy="18" r="15" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 100" transform="rotate(-90 18 18)" pathLength="100" style="transition:stroke-dasharray .8s"/>
+              </svg>
+              <b id="homePct" class="absolute inset-0 flex items-center justify-center font-display font-extrabold text-base text-slate-900">0%</b>
+            </div>
+            <div>
+              <h2 id="homeGreeting" class="text-2xl font-bold text-slate-900">Welcome</h2>
+              <p id="homeSub" class="text-slate-500 text-sm mt-0.5"></p>
+            </div>
+          </div>
+          <div class="bg-rose-50 border border-rose-100 rounded-xl px-4 py-3 text-right">
+            <small class="text-[11px] font-bold uppercase tracking-wider text-rose-600 block">Submission Deadline</small>
+            <div id="homeDl" class="text-lg font-extrabold text-rose-700">--</div>
+          </div>
+        </div>
+
+        <!-- Scholarship Program Selection Card -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 class="font-display font-bold text-base text-slate-900">Select Scholarship Program</h3>
+          <p class="text-xs text-slate-500 mt-1 mb-4">Choose your targeted financial grant to load official verification requirements and checklists.</p>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <select id="schSelect" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"></select>
+            <button type="button" onclick="chooseScholarship()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition-colors">Select Program</button>
+          </div>
+        </div>
+
+        <!-- Next Action Card -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 class="font-display font-bold text-base text-slate-900 mb-2">Next Recommended Step</h3>
+          <div id="homeNextStep" class="text-sm text-slate-600">Loading next step...</div>
+        </div>
+      </section>
+
+      <!-- 2. ASSISTANT CHAT SCREEN -->
+      <section id="screenAssistant" class="screen">
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-[74vh]">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <span class="material-symbols-outlined text-[18px]">smart_toy</span>
+              </div>
+              <div>
+                <h3 class="font-display font-bold text-sm text-slate-900">Scholarship Copilot</h3>
+                <span class="text-xs text-slate-400">RAG-verified guidelines + open memory chat</span>
+              </div>
+            </div>
+            <select id="chatLang" class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 font-medium focus:outline-none focus:border-blue-600">
+              <option>English</option>
+              <option>Kannada</option>
+              <option>Hindi</option>
+            </select>
+          </div>
+
+          <!-- Messages Container -->
+          <div id="chatMsgs" class="flex-1 overflow-y-auto p-5 space-y-4"></div>
+
+          <!-- Quick Chips & Input Form -->
+          <div class="p-4 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl">
+            <div class="flex flex-wrap gap-2 mb-3">
+              <button type="button" onclick="sendQuickQuestion('What documents are missing or need fixing for my scholarship?')" class="px-3 py-1 rounded-full text-xs font-medium bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-colors shadow-2xs">What's missing?</button>
+              <button type="button" onclick="sendQuickQuestion('What happens after I submit my application?')" class="px-3 py-1 rounded-full text-xs font-medium bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-colors shadow-2xs">What happens after submit?</button>
+              <button type="button" onclick="sendQuickQuestion('Who do I contact about payment and portal support?')" class="px-3 py-1 rounded-full text-xs font-medium bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-colors shadow-2xs">Who do I contact?</button>
+            </div>
+
+            <form id="chatForm" onsubmit="handleSendChat(event)" class="flex gap-2">
+              <input type="text" id="chatInput" placeholder="Ask about required documents, deadlines, or open campus questions..." autocomplete="off" class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+              <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition-colors flex items-center gap-1.5">
+                <span>Send</span>
+                <span class="material-symbols-outlined text-[16px]">send</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. DOCUMENTS SCREEN -->
+      <section id="screenDocuments" class="screen space-y-6">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-display font-bold text-base text-slate-900">Required Document Checklist</h3>
+              <p class="text-xs text-slate-500">Autonomous OCR validates file names, document categories, and session validity.</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 rounded-md text-slate-600">Verification Active</span>
+          </div>
+
+          <div id="docsList" class="space-y-2.5"></div>
+
+          <!-- Upload Box -->
+          <div id="uploadBox" class="mt-6 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <select id="uploadDocType" class="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"></select>
+            <input type="file" id="uploadFile" class="flex-1 text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+            <button type="button" onclick="handleDocUpload()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition-colors shrink-0">Upload Document</button>
+          </div>
+          <div id="uploadWarn" class="mt-3"></div>
+        </div>
+
+        <!-- Submit Container -->
+        <div id="submitContainer"></div>
+      </section>
+
+      <!-- 4. TIMELINE SCREEN -->
+      <section id="screenTimeline" class="screen">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div class="mb-6">
+            <h3 class="font-display font-bold text-base text-slate-900">Master Scholarship Timeline</h3>
+            <p class="text-xs text-slate-500">Synchronized dates from database policy rows.</p>
+          </div>
+          <div id="timelineList" class="border-l-2 border-blue-600 ml-4 space-y-6"></div>
+        </div>
+      </section>
+
+      <!-- 5. ALERTS SCREEN -->
+      <section id="screenAlerts" class="screen">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div class="mb-4">
+            <h3 class="font-display font-bold text-base text-slate-900">Notification Feed</h3>
+            <p class="text-xs text-slate-500">Urgent deadline notices and automated document verification alerts.</p>
+          </div>
+          <div id="alertsList" class="space-y-3"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let TOKEN = localStorage.getItem('nimbus_student_token') || '';
+let STATE = null;
+let CHAT_HIST = [];
+
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2800);
+}
+
+function switchAuthTab(tab) {
+  if (tab === 'signin') {
+    $('#tabSignInBtn').className = 'flex-1 py-2 text-xs font-semibold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
+    $('#tabSignUpBtn').className = 'flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-slate-500 hover:text-slate-900';
+    $('#signInForm').style.display = 'block';
+    $('#signUpForm').style.display = 'none';
+  } else {
+    $('#tabSignUpBtn').className = 'flex-1 py-2 text-xs font-semibold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
+    $('#tabSignInBtn').className = 'flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-slate-500 hover:text-slate-900';
+    $('#signUpForm').style.display = 'block';
+    $('#signInForm').style.display = 'none';
+  }
+}
+
+async function handleSignIn(e) {
+  e.preventDefault();
+  const student_id = $('#loginStudentId').value.trim();
+  const pin = $('#loginPin').value.trim();
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id, pin })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Sign in failed');
+
+    TOKEN = data.token;
+    localStorage.setItem('nimbus_student_token', TOKEN);
+    toast('Welcome back!');
+    initPortal();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function handleSignUp(e) {
+  e.preventDefault();
+  const payload = {
+    student_id: $('#regStudentId').value.trim(),
+    name: $('#regName').value.trim(),
+    branch: $('#regBranch').value.trim(),
+    year: $('#regYear').value.trim(),
+    category: $('#regCategory').value,
+    language: $('#regLanguage').value,
+    pin: $('#regPin').value.trim()
+  };
+
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Registration failed');
+
+    TOKEN = data.token;
+    localStorage.setItem('nimbus_student_token', TOKEN);
+    toast('Account created successfully!');
+    initPortal();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function handleLogout() {
+  TOKEN = '';
+  localStorage.removeItem('nimbus_student_token');
+  $('#portalStage').style.display = 'none';
+  $('#authStage').style.display = 'flex';
+}
+
+function switchView(view) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sidebar button[id^="nav"]').forEach(b => {
+    b.className = 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors';
+    const icon = b.querySelector('.material-symbols-outlined');
+    if (icon) icon.className = 'material-symbols-outlined text-[20px] text-slate-400';
+  });
+
+  const screenId = 'screen' + view.charAt(0).toUpperCase() + view.slice(1);
+  const navId = 'nav' + view.charAt(0).toUpperCase() + view.slice(1);
+  const s = $('#' + screenId);
+  const b = $('#' + navId);
+  if (s) s.classList.add('active');
+  if (b) {
+    b.className = 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-blue-50 text-blue-600 w-full text-left transition-colors';
+    const icon = b.querySelector('.material-symbols-outlined');
+    if (icon) icon.className = 'material-symbols-outlined text-[20px] text-blue-600';
+  }
+
+  const titles = { home: 'Overview', assistant: 'AI Assistant Copilot', documents: 'Document Verification', timeline: 'Milestone Timeline', alerts: 'Notifications' };
+  $('#currentScreenTitle').textContent = titles[view] || 'Workspace';
+}
+
+async function api(path, method = 'GET', body = null) {
+  const headers = {};
+  if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+  if (body) headers['Content-Type'] = 'application/json';
+
+  const res = await fetch(path, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null
+  });
+  if (res.status === 401) {
+    handleLogout();
+    throw new Error('Session expired');
+  }
+  return res.json();
+}
+
+async function initPortal() {
+  try {
+    const me = await api('/api/auth/me');
+    if (me.role !== 'student') {
+      handleLogout();
+      return;
+    }
+
+    $('#authStage').style.display = 'none';
+    $('#portalStage').style.display = 'flex';
+
+    const s = me.student;
+    $('#profileName').textContent = s.name;
+    $('#profileDetails').textContent = `${s.student_id} • ${s.branch}, ${s.year}`;
+    const initials = s.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'ST';
+    $('#profileInitials').textContent = initials;
+    $('#chatLang').value = s.language || 'English';
+
+    await refreshState();
+  } catch (err) {
+    handleLogout();
+  }
+}
+
+async function refreshState() {
+  STATE = await api('/api/state');
+  const s = STATE.student;
+  $('#profileScholarship').textContent = STATE.scholarship ? `★ ${STATE.scholarship}` : 'No program chosen';
+
+  const ok = STATE.checklist.filter(i => i[1] === 'OK').length;
+  const n = STATE.checklist.length;
+  const pct = n ? Math.round(ok / n * 100) : 0;
+
+  $('#homeGreeting').textContent = `Hi, ${s.name}`;
+  $('#homeSub').textContent = `${s.branch} • ${s.year} • ${STATE.scholarship || 'No scholarship selected'}`;
+  $('#homeDl').textContent = STATE.timeline.deadline || 'Tonight';
+  $('#homePct').textContent = `${pct}%`;
+  $('#homeArc').setAttribute('stroke-dasharray', `${pct} 100`);
+
+  // Scholarship Dropdown
+  const schSelect = $('#schSelect');
+  schSelect.innerHTML = (STATE.catalog || []).map(c =>
+    `<option value="${esc(c)}" ${c === STATE.scholarship ? 'selected' : ''}>${esc(c)}</option>`
+  ).join('');
+
+  // Next Step Calculation
+  const problems = STATE.checklist.filter(i => i[1] !== 'OK');
+  const nextStepEl = $('#homeNextStep');
+  if (!STATE.scholarship) {
+    nextStepEl.innerHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">Please choose a scholarship program below to generate your document checklist.</span>';
+  } else if (STATE.application) {
+    nextStepEl.innerHTML = '<div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm"><b>Application Submitted:</b> Your documentation has been formally locked and submitted for committee review. Results expected on ' + esc(STATE.timeline.results || '10 Oct') + '.</div>';
+  } else if (problems.length) {
+    nextStepEl.innerHTML = `<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200">Action Required: ${esc(problems[0][0])} is ${esc(problems[0][1].toLowerCase().replace('_', ' '))}. Submit before ${esc(STATE.timeline.deadline)}.</span>`;
+  } else {
+    nextStepEl.innerHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">All Clear: All required documents uploaded! Go to the Documents tab to submit your application.</span>';
+  }
+
+  renderDocuments();
+  renderTimeline();
+  renderAlerts();
+}
+
+async function chooseScholarship() {
+  const chosen = $('#schSelect').value;
+  if (!chosen) return;
+  await api('/api/scholarship/choose', 'POST', { scholarship: chosen });
+  toast('Scholarship selected');
+  await refreshState();
+}
+
+function renderDocuments() {
+  const box = $('#docsList');
+  if (!STATE.scholarship) {
+    box.innerHTML = '<p class="text-xs text-slate-400">Select a scholarship on the Home screen to view requirements.</p>';
+    $('#uploadBox').style.display = 'none';
+    $('#submitContainer').innerHTML = '';
+    return;
+  }
+  $('#uploadBox').style.display = 'flex';
+
+  box.innerHTML = STATE.checklist.map(([name, status, why]) => `
+    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+      <div>
+        <span class="font-semibold text-slate-900 text-sm">${esc(name)}</span>
+        ${why ? `<div class="text-xs text-slate-500 mt-0.5">${esc(why)}</div>` : ''}
+      </div>
+      <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold pill-${status}">${status.replace('_', ' ')}</span>
+    </div>
+  `).join('');
+
+  $('#uploadDocType').innerHTML = (STATE.required || []).map(r => `<option>${esc(r)}</option>`).join('');
+
+  const submitBox = $('#submitContainer');
+  if (STATE.application) {
+    submitBox.innerHTML = `
+      <div class="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+        <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-sm">
+          <span class="material-symbols-outlined text-[20px]">check</span>
+        </div>
+        <h4 class="font-display font-bold text-lg text-emerald-900">Application Formally Submitted</h4>
+        <p class="text-xs text-emerald-700 max-w-md mx-auto">Your application for <b>${esc(STATE.scholarship)}</b> is locked and safely recorded in the university review ledger.</p>
+        <div class="pt-2 text-xs text-emerald-800 font-medium">Verification: <b>${esc(STATE.timeline.verification || '03 Oct to 07 Oct')}</b> • Results: <b>${esc(STATE.timeline.results || '10 Oct')}</b></div>
+      </div>
+    `;
+  } else {
+    const unres = STATE.checklist.filter(i => i[1] !== 'OK');
+    submitBox.innerHTML = `
+      <div class="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm text-center space-y-3">
+        <h4 class="font-display font-bold text-base text-slate-900">Lock & Submit Final Application</h4>
+        <p class="text-xs text-slate-500 max-w-md mx-auto">Once all checklist items display 'OK', you can finalize your submission for committee review.</p>
+        <button type="button" onclick="handleSubmitApplication()" ${unres.length ? 'disabled class="py-2.5 px-6 rounded-xl bg-slate-100 text-slate-400 font-semibold text-xs cursor-not-allowed border border-slate-200"' : 'class="py-2.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition-all"'}>
+          ${unres.length ? 'Resolve Outstanding Documents to Submit' : 'Submit Application Now'}
+        </button>
+      </div>
+    `;
+  }
+}
+
+async function handleDocUpload() {
+  const fl = $('#uploadFile');
+  if (!fl.files.length) {
+    alert('Please choose a file to upload');
+    return;
+  }
+  const file_name = fl.files[0].name;
+  const doc_type = $('#uploadDocType').value;
+
+  const res = await api('/api/upload', 'POST', { doc_type, file_name });
+  fl.value = '';
+  if (res.warning) {
+    $('#uploadWarn').innerHTML = `<div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">Category Mismatch: ${esc(res.warning)}</div>`;
+  } else {
+    $('#uploadWarn').innerHTML = '';
+    toast('Document uploaded');
+  }
+  await refreshState();
+}
+
+async function handleSubmitApplication() {
+  try {
+    const res = await api('/api/application/submit', 'POST', {});
+    toast('Application submitted successfully!');
+    await refreshState();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function renderTimeline() {
+  const k = Object.entries(STATE.timeline || {});
+  $('#timelineList').innerHTML = k.map(([key, val], i) => `
+    <div class="relative pl-6 pb-6">
+      <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white ${i === 0 ? 'bg-blue-600 ring-4 ring-blue-100' : 'bg-slate-300'}"></div>
+      <small class="text-xs font-semibold uppercase tracking-wider text-slate-400 block">${esc(key.replace('_', ' '))}</small>
+      <span class="font-display font-bold text-slate-900 text-base">${esc(val)}</span>
+    </div>
+  `).join('');
+}
+
+function renderAlerts() {
+  const alerts = STATE.notifications || [];
+  $('#alertsList').innerHTML = alerts.length ? alerts.map(n => `
+    <div class="p-4 rounded-xl border ${n.priority === 'URGENT' ? 'bg-rose-50/70 border-rose-200 text-rose-900' : 'bg-amber-50/70 border-amber-200 text-amber-900'} flex items-start justify-between gap-3">
+      <div>
+        <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${n.priority === 'URGENT' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}">${esc(n.priority)}</span>
+        <div class="text-sm font-medium mt-1">${esc(n.message)}</div>
+      </div>
+      <span class="text-xs text-slate-400 shrink-0">${esc(n.ts || '')}</span>
+    </div>
+  `).join('') : '<p class="text-xs text-slate-400">No active alerts. You are in good standing.</p>';
+}
+
+// Assistant chat handling
+async function handleSendChat(e) {
+  e.preventDefault();
+  const q = $('#chatInput').value.trim();
+  if (!q) return;
+  $('#chatInput').value = '';
+
+  CHAT_HIST.push({ role: 'user', text: q });
+  renderChatMessages();
+
+  try {
+    const res = await api('/api/chat', 'POST', {
+      message: q,
+      chosen: STATE ? STATE.scholarship : null,
+      language: $('#chatLang').value
+    });
+    CHAT_HIST.push({ role: 'assistant', res });
+    renderChatMessages();
+    await refreshState();
+  } catch (err) {
+    CHAT_HIST.push({ role: 'assistant', res: { answer: 'Error: ' + err.message, status: 'error' } });
+    renderChatMessages();
+  }
+}
+
+function sendQuickQuestion(q) {
+  $('#chatInput').value = q;
+  $('#chatForm').dispatchEvent(new Event('submit'));
+}
+
+function renderChatMessages() {
+  const box = $('#chatMsgs');
+  if (!CHAT_HIST.length) {
+    box.innerHTML = `
+      <div class="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-700 max-w-xl">
+        <span class="material-symbols-outlined text-blue-600 text-[20px] shrink-0">smart_toy</span>
+        <div>Hello! I am your AI Scholarship Copilot. Ask me about eligibility rules, checklist requirements, or general university inquiries.</div>
+      </div>
+    `;
+    return;
+  }
+
+  box.innerHTML = CHAT_HIST.map(m => {
+    if (m.role === 'user') {
+      return `
+        <div class="flex justify-end">
+          <div class="bg-blue-600 text-white rounded-2xl rounded-tr-xs px-4 py-2.5 max-w-lg text-sm shadow-xs font-medium">
+            ${esc(m.text)}
+          </div>
+        </div>
+      `;
+    }
+    const r = m.res;
+    let h = `
+      <div class="flex justify-start">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl rounded-tl-xs p-4 max-w-xl text-sm text-slate-800 shadow-2xs space-y-2">
+    `;
+
+    if (r.label) {
+      h += `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">${esc(r.label)}</span>`;
+    }
+
+    if (r.status) {
+      const BAN = {
+        action_required: 'Action Required: Fix documents before deadline',
+        all_clear: 'All Clear: Requirements verified',
+        escalated: 'Escalated to Scholarship Office',
+        out_of_scope: 'General Guidance (Outside Document Scope)'
+      };
+      const colors = {
+        action_required: 'bg-rose-50 text-rose-700 border-rose-200',
+        all_clear: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        escalated: 'bg-blue-50 text-blue-700 border-blue-200',
+        out_of_scope: 'bg-amber-50 text-amber-700 border-amber-200'
+      };
+      if (BAN[r.status]) {
+        h += `<div class="px-3 py-1.5 rounded-lg text-xs font-semibold border ${colors[r.status] || ''}">${BAN[r.status]}</div>`;
+      }
+    }
+
+    if (r.conflict) {
+      const c = r.conflict;
+      h += `
+        <div class="grid grid-cols-2 gap-2 my-2 text-xs">
+          <div class="p-2.5 rounded-lg bg-rose-50/70 border border-rose-200 text-rose-900 line-through">
+            <span class="block text-[10px] font-bold uppercase tracking-wider text-rose-500 mb-1">Superseded (${c.older_year})</span>
+            ${esc(c.older_rule)}
+          </div>
+          <div class="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-emerald-900">
+            <span class="block text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-1">Current Rule (${c.current_year})</span>
+            ${esc(c.current_rule)}
+          </div>
+        </div>
+      `;
+    }
+
+    h += `<div>${esc(r.answer).replace(/\n/g, '<br>')}</div>`;
+
+    if (r.steps?.length) {
+      h += `
+        <ol class="mt-2 pl-3 border-l-2 border-blue-600 space-y-1 text-xs text-slate-700">
+          ${r.steps.map((st, i) => `<li><b>${i+1}.</b> ${esc(st)}</li>`).join('')}
+        </ol>
+      `;
+    }
+
+    if (r.sources?.length) {
+      h += `
+        <div class="flex flex-wrap gap-1 pt-1">
+          ${r.sources.map(src => `<span class="px-2 py-0.5 rounded-md bg-slate-200/80 text-[11px] font-medium text-slate-600">${esc(src)}</span>`).join('')}
+        </div>
+      `;
+    }
+
+    h += '</div></div>';
+    return h;
+  }).join('');
+
+  box.scrollTop = box.scrollHeight;
+}
+
+if (TOKEN) {
+  initPortal();
+} else {
+  $('#authStage').style.display = 'flex';
+}
+</script>
+</body>
+</html>

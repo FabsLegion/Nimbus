@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ScholarFlow - Financial Aid Office Console</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; overscroll-behavior: none; }
+    h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .pill-published, .pill-OK { background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .pill-draft, .pill-INVALID { background-color: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+    .pill-MISSING { background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .pill-WRONG_CATEGORY { background-color: #faf5ff; color: #7c3aed; border: 1px solid #e9d5ff; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col selection:bg-blue-100 selection:text-blue-700">
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-xl font-medium text-sm shadow-xl z-50 transition-all duration-300 pointer-events-none" style="display:none"></div>
+
+<!-- ================= STAGE 1: ADMIN LOGIN ================= -->
+<div id="authStage" class="flex-1 flex items-center justify-center p-6">
+  <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+    <div class="text-center mb-6">
+      <div class="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center text-white mx-auto mb-3 shadow-md">
+        <span class="material-symbols-outlined text-[26px]">admin_panel_settings</span>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Office Review Console</h1>
+      <p class="text-slate-500 text-sm mt-1">Staff authentication for Financial Aid & Scholarship Office</p>
+    </div>
+
+    <form id="adminLoginForm" onsubmit="handleAdminLogin(event)" class="space-y-4">
+      <div>
+        <label for="adminPasscode" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Security Passcode (ADMIN_PASSCODE)</label>
+        <input type="password" id="adminPasscode" required placeholder="Enter administrative passcode" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all">
+      </div>
+      <button type="submit" class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm shadow-sm transition-all">Authenticate Staff Access</button>
+    </form>
+
+    <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+      <a href="/" class="text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        Return to Portal Hub
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STAGE 2: ADMIN PORTAL ================= -->
+<div id="portalStage" class="min-h-screen flex" style="display:none">
+  <!-- Minimal Sidebar Navigation -->
+  <aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 z-40 flex flex-col justify-between py-6 px-4">
+    <div class="flex flex-col gap-6">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 px-2">
+        <div class="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-sm">
+          <span class="material-symbols-outlined text-[20px]">school</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-display font-bold text-lg text-slate-900 tracking-tight leading-tight">ScholarFlow</span>
+          <span class="text-xs font-medium text-slate-400">Aid Officer Console</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="flex flex-col gap-1.5">
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-blue-50 text-blue-600 w-full text-left transition-colors" onclick="switchView('overview')" id="navOverview">
+          <span class="material-symbols-outlined text-[20px]">dashboard</span>
+          Overview
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('cases')" id="navCases">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">assignment_late</span>
+          Cases &amp; Queries
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('issues')" id="navIssues">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">how_to_reg</span>
+          Document Issues
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('kb')" id="navKb">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">menu_book</span>
+          Knowledge Base
+        </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('health')" id="navHealth">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">monitoring</span>
+          AI Health
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sign Out Footer -->
+    <div class="pt-4 border-t border-slate-100">
+      <button onclick="handleAdminLogout()" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-100 transition-colors">
+        <span class="material-symbols-outlined text-[16px]">logout</span>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Canvas -->
+  <div class="pl-64 flex-1 flex flex-col min-w-0">
+    <header class="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 flex items-center justify-between px-8">
+      <div class="flex items-center gap-3">
+        <h2 class="font-display font-bold text-lg text-slate-900" id="currentScreenTitle">Office Review Console</h2>
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          AI Live Assisting
+        </span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 rounded-md text-slate-600">Admin Block</span>
+      </div>
+    </header>
+
+    <main class="p-8 max-w-7xl mx-auto w-full flex flex-col gap-6">
+
+      <!-- 1. OVERVIEW SCREEN -->
+      <section id="screenOverview" class="screen active space-y-6">
+        <!-- 4 KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="kpiGrid">
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Inquiries</span>
+            <div id="kpiTotal" class="font-display text-3xl font-extrabold text-slate-900 mt-2">0</div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Unresolved / Escalated</span>
+            <div id="kpiUnresolved" class="font-display text-3xl font-extrabold text-rose-600 mt-2">0</div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Handled by AI</span>
+            <div id="kpiRate" class="font-display text-3xl font-extrabold text-emerald-600 mt-2">100%</div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Document Problems</span>
+            <div id="kpiProblems" class="font-display text-3xl font-extrabold text-amber-600 mt-2">0</div>
+          </div>
+        </div>
+
+        <!-- Query Categories Breakdown -->
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <h3 class="font-display font-bold text-base text-slate-900 mb-1">Query Distribution by Category</h3>
+          <p class="text-xs text-slate-500 mb-5">Breakdown of student questions parsed and handled across offices</p>
+          <div id="catsChart" class="space-y-4"></div>
+        </div>
+      </section>
+
+      <!-- 2. CASES SCREEN -->
+      <section id="screenCases" class="screen space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div class="mb-4">
+            <h3 class="font-display font-bold text-base text-slate-900">Student Cases &amp; Escalations</h3>
+            <p class="text-xs text-slate-500">Inquiries flagged for human review or unresolved by automated policy logic</p>
+          </div>
+          <div id="casesList" class="space-y-2.5">Loading cases...</div>
+        </div>
+      </section>
+
+      <!-- 3. DOCUMENT ISSUES SCREEN -->
+      <section id="screenIssues" class="screen space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div class="mb-4">
+            <h3 class="font-display font-bold text-base text-slate-900">Document Verification Queue</h3>
+            <p class="text-xs text-slate-500">Autonomous OCR and database cross-checks for immediate officer inspection</p>
+          </div>
+          <div id="issuesList" class="space-y-2.5">Loading document issues...</div>
+        </div>
+      </section>
+
+      <!-- 4. KNOWLEDGE BASE SCREEN (Task A4) -->
+      <section id="screenKb" class="screen space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div class="mb-4">
+            <h3 class="font-display font-bold text-base text-slate-900">Upload Scholarship Policy Document</h3>
+            <p class="text-xs text-slate-500">Upload PDF, DOCX, or TXT. PyMuPDF4LLM chunks sections with page numbers; LLM extracts structured metadata.</p>
+          </div>
+
+          <!-- Dropzone -->
+          <div class="border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/50 hover:bg-blue-50/20 rounded-2xl p-8 text-center cursor-pointer transition-colors" onclick="$('#kbFileInput').click()">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
+              <span class="material-symbols-outlined text-[28px]">upload_file</span>
+            </div>
+            <h4 class="font-display font-bold text-sm text-slate-900 mb-1">Click to browse or drop policy document here</h4>
+            <p class="text-xs text-slate-500">Supported formats: PDF, DOCX, TXT. Automated chunking &amp; JSON schema validation.</p>
+            <input type="file" id="kbFileInput" accept=".pdf,.docx,.txt" style="display:none" onchange="uploadKbDoc()">
+          </div>
+
+          <div id="kbLoadingOverlay" class="mt-4 p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold flex items-center gap-3" style="display:none">
+            <div class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span id="kbLoadingText">Processing document with PyMuPDF4LLM...</span>
+          </div>
+        </div>
+
+        <!-- AI Draft Editor Card -->
+        <div id="kbDraftCard" class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4" style="display:none">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2.5">
+              <h3 class="font-display font-bold text-base text-slate-900">Extracted Policy Draft</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold pill-draft" id="kbDraftBadge">Draft</span>
+            </div>
+            <small class="text-xs font-medium text-slate-400" id="kbDraftIdLabel"></small>
+          </div>
+
+          <form id="kbDraftForm" onsubmit="event.preventDefault()" class="space-y-4">
+            <input type="hidden" id="kbDraftId">
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Source File Name</label>
+              <input type="text" id="kbDraftFileName" readonly class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-600 cursor-not-allowed">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Scholarship Program Name *</label>
+              <input type="text" id="kbDraftName" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Academic Year</label>
+                <input type="number" id="kbDraftYear" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Policy Version</label>
+                <input type="number" id="kbDraftVer" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Required Documents (one per line)</label>
+              <textarea id="kbDraftReqDocs" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Timeline Dates (JSON)</label>
+                <textarea id="kbDraftDates" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Offices (JSON)</label>
+                <textarea id="kbDraftOffices" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"></textarea>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Extracted Chunks (<span id="kbChunkCount">0</span> sections with page numbers)</label>
+              <div id="kbChunksPreview" class="max-h-52 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2"></div>
+            </div>
+
+            <div class="flex flex-wrap gap-2.5 pt-2">
+              <button type="button" onclick="publishKbDraft()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-sm transition-colors">Publish to Knowledge Base</button>
+              <button type="button" onclick="deleteKbDraft()" class="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-sm transition-colors">Delete Policy</button>
+              <button type="button" onclick="$('#kbDraftCard').style.display='none'" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Policy Documents Table -->
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div class="mb-4">
+            <h3 class="font-display font-bold text-base text-slate-900">Policies in Knowledge Base</h3>
+            <p class="text-xs text-slate-500">Live indexed documents in ChromaDB and SQLite</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <th class="py-3 px-4">Document / Program</th>
+                  <th class="py-3 px-4">Year &amp; Ver</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="kbTableBody" class="divide-y divide-slate-100">
+                <tr><td colspan="4" class="py-4 text-center text-xs text-slate-400">Loading policies...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. AI HEALTH SCREEN -->
+      <section id="screenHealth" class="screen space-y-6">
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div class="mb-4">
+            <h3 class="font-display font-bold text-base text-slate-900">AI Provider Health &amp; Gateway Audit</h3>
+            <p class="text-xs text-slate-500">Telemetry for external LLM requests, latency timings, and failover status</p>
+          </div>
+          <div id="healthLog" class="space-y-2.5">Loading logs...</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let ADMIN_TOKEN = localStorage.getItem('nimbus_admin_token') || '';
+
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2800);
+}
+
+async function handleAdminLogin(e) {
+  e.preventDefault();
+  const passcode = $('#adminPasscode').value.trim();
+
+  try {
+    const res = await fetch('/api/auth/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passcode })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Authorization failed');
+
+    ADMIN_TOKEN = data.token;
+    localStorage.setItem('nimbus_admin_token', ADMIN_TOKEN);
+    toast('Staff access authorized');
+    initAdminPortal();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function handleAdminLogout() {
+  ADMIN_TOKEN = '';
+  localStorage.removeItem('nimbus_admin_token');
+  $('#portalStage').style.display = 'none';
+  $('#authStage').style.display = 'flex';
+}
+
+function switchView(view) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sidebar button[id^="nav"]').forEach(b => {
+    b.className = 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors';
+    const icon = b.querySelector('.material-symbols-outlined');
+    if (icon) icon.className = 'material-symbols-outlined text-[20px] text-slate-400';
+  });
+
+  const screenId = 'screen' + view.charAt(0).toUpperCase() + view.slice(1);
+  const navId = 'nav' + view.charAt(0).toUpperCase() + view.slice(1);
+  const s = $('#' + screenId);
+  const b = $('#' + navId);
+  if (s) s.classList.add('active');
+  if (b) {
+    b.className = 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-blue-50 text-blue-600 w-full text-left transition-colors';
+    const icon = b.querySelector('.material-symbols-outlined');
+    if (icon) icon.className = 'material-symbols-outlined text-[20px] text-blue-600';
+  }
+
+  const titles = { overview: 'Office Review Console', cases: 'Cases & Escalations', issues: 'Document Issues Queue', kb: 'Knowledge Base Management', health: 'AI Health & Telemetry' };
+  $('#currentScreenTitle').textContent = titles[view] || 'Console';
+
+  if (view === 'kb') loadKbDrafts();
+}
+
+async function adminApi(path, method = 'GET', body = null) {
+  const headers = {};
+  if (ADMIN_TOKEN) headers['Authorization'] = `Bearer ${ADMIN_TOKEN}`;
+  if (body) headers['Content-Type'] = 'application/json';
+
+  const res = await fetch(path, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null
+  });
+  if (res.status === 401) {
+    handleAdminLogout();
+    throw new Error('Admin session expired');
+  }
+  return res.json();
+}
+
+async function initAdminPortal() {
+  try {
+    const me = await adminApi('/api/auth/me');
+    if (me.role !== 'admin') {
+      handleAdminLogout();
+      return;
+    }
+
+    $('#authStage').style.display = 'none';
+    $('#portalStage').style.display = 'flex';
+
+    await refreshAdminData();
+    loadKbDrafts();
+  } catch (err) {
+    handleAdminLogout();
+  }
+}
+
+async function refreshAdminData() {
+  const d = await adminApi('/api/admin');
+  
+  $('#kpiTotal').textContent = d.total;
+  $('#kpiUnresolved').textContent = d.unresolved.length;
+  const rate = d.total ? Math.round((1 - d.unresolved.length / d.total) * 100) : 100;
+  $('#kpiRate').textContent = `${rate}%`;
+  $('#kpiProblems').textContent = d.problems.length;
+
+  // Chart
+  const mx = Math.max(1, ...Object.values(d.categories));
+  $('#catsChart').innerHTML = Object.entries(d.categories).map(([k, v]) => `
+    <div class="space-y-1">
+      <div class="flex items-center justify-between text-xs">
+        <span class="font-semibold text-slate-700">${esc(k)}</span>
+        <span class="font-bold text-slate-900">${v}</span>
+      </div>
+      <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+        <div class="bg-blue-600 h-full rounded-full" style="width: ${Math.round(v / mx * 100)}%;"></div>
+      </div>
+    </div>
+  `).join('') || '<p class="text-xs text-slate-400">No queries logged yet.</p>';
+
+  // Cases List
+  const casesBox = $('#casesList');
+  const items = d.unresolved.length ? d.unresolved : d.recent;
+  if (!items.length) {
+    casesBox.innerHTML = '<p class="text-xs text-slate-400">No active cases.</p>';
+  } else {
+    casesBox.innerHTML = items.map(r => `
+      <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+        <div>
+          <span class="font-semibold text-slate-900 text-sm">${esc(r.student_id)}</span>: "${esc(r.text)}"
+          <div class="text-xs text-slate-400 mt-0.5">Category: ${esc(r.category)} • Office: ${esc(r.office || 'General')}</div>
+        </div>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${r.resolved ? 'pill-OK' : 'pill-INVALID'}">${r.resolved ? 'Resolved' : 'Escalated'}</span>
+      </div>
+    `).join('');
+  }
+
+  // Document Issues
+  const issuesBox = $('#issuesList');
+  issuesBox.innerHTML = d.problems.length ? d.problems.map(p => `
+    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+      <div>
+        <span class="font-semibold text-slate-900 text-sm">${esc(p.student)}</span> — ${esc(p.document)}
+        ${p.detail ? `<div class="text-xs text-slate-500 mt-0.5">${esc(p.detail)}</div>` : ''}
+      </div>
+      <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold pill-${p.problem}">${esc(p.problem.replace('_', ' '))}</span>
+    </div>
+  `).join('') : '<p class="text-xs text-slate-400">All submitted documents are verified.</p>';
+
+  // Health Log
+  const healthBox = $('#healthLog');
+  healthBox.innerHTML = d.llm_log.length ? d.llm_log.map(l => `
+    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+      <div>
+        <b class="text-slate-800">${esc(l.provider)}</b>
+        <span class="text-slate-400 ml-2">${l.sec}s latency</span>
+      </div>
+      <span class="px-2 py-0.5 rounded-full font-semibold ${l.ok ? 'pill-OK' : 'pill-MISSING'}">${l.ok ? 'Operational' : 'Failed'}</span>
+    </div>
+  `).join('') : '<p class="text-xs text-slate-400">No external LLM calls logged yet.</p>';
+}
+
+// ---------------- KNOWLEDGE BASE (A4) ----------------
+
+async function uploadKbDoc() {
+  const fl = $('#kbFileInput');
+  if (!fl.files.length) return;
+  const file = fl.files[0];
+
+  const overlay = $('#kbLoadingOverlay');
+  overlay.style.display = 'flex';
+  $('#kbLoadingText').textContent = `Extracting ${file.name} with PyMuPDF4LLM...`;
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    const res = await fetch('/admin/kb/upload', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
+      body: fd
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Upload failed');
+    }
+    const data = await res.json();
+    toast('Extracted metadata draft!');
+    populateKbDraft(data);
+    await loadKbDrafts();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    overlay.style.display = 'none';
+    fl.value = '';
+  }
+}
+
+function populateKbDraft(d) {
+  $('#kbDraftCard').style.display = 'block';
+  $('#kbDraftId').value = d.id;
+  $('#kbDraftIdLabel').textContent = `Policy #${d.id}`;
+  $('#kbDraftFileName').value = d.file_name;
+  $('#kbDraftName').value = d.scholarship_name || '';
+  $('#kbDraftYear').value = d.year || 2026;
+  $('#kbDraftVer').value = d.version || 1;
+
+  const docs = Array.isArray(d.required_documents) ? d.required_documents : [];
+  $('#kbDraftReqDocs').value = docs.join('\n');
+  $('#kbDraftDates').value = JSON.stringify(d.dates || {}, null, 2);
+  $('#kbDraftOffices').value = JSON.stringify(d.offices || [], null, 2);
+
+  const badge = $('#kbDraftBadge');
+  badge.textContent = d.status || 'draft';
+  badge.className = `px-2.5 py-0.5 rounded-full text-xs font-semibold pill-${d.status === 'published' ? 'published' : 'draft'}`;
+
+  const chunks = d.chunks || [];
+  $('#kbChunkCount').textContent = chunks.length;
+  $('#kbChunksPreview').innerHTML = chunks.map(c => `
+    <div class="p-2.5 rounded-lg bg-white border border-slate-200 text-xs">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 block mb-0.5">Page ${c.page || 1}</span>
+      <div class="text-slate-700">${esc(c.text)}</div>
+    </div>
+  `).join('') || '<div class="text-xs text-slate-400">No chunks extracted</div>';
+
+  $('#kbDraftCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function publishKbDraft() {
+  const id = $('#kbDraftId').value;
+  if (!id) return;
+
+  let dates = {}, offices = [];
+  try { dates = JSON.parse($('#kbDraftDates').value || '{}'); } catch (e) { alert('Invalid Dates JSON'); return; }
+  try { offices = JSON.parse($('#kbDraftOffices').value || '[]'); } catch (e) { alert('Invalid Offices JSON'); return; }
+
+  const reqDocs = $('#kbDraftReqDocs').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  const payload = {
+    scholarship_name: $('#kbDraftName').value.trim(),
+    year: parseInt($('#kbDraftYear').value, 10),
+    version: parseInt($('#kbDraftVer').value, 10),
+    required_documents: reqDocs,
+    dates,
+    offices
+  };
+
+  try {
+    const res = await adminApi(`/admin/kb/${id}/publish`, 'POST', payload);
+    toast(`Published! ${res.chunks_indexed} chunks indexed in ChromaDB.`);
+    $('#kbDraftBadge').textContent = 'published';
+    $('#kbDraftBadge').className = 'px-2.5 py-0.5 rounded-full text-xs font-semibold pill-published';
+    await loadKbDrafts();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function deleteKbDraft(targetId) {
+  const id = targetId || $('#kbDraftId').value;
+  if (!id) return;
+  if (!confirm(`Delete policy #${id}? This will remove its chunks from ChromaDB.`)) return;
+
+  try {
+    await adminApi(`/admin/kb/${id}`, 'DELETE');
+    toast(`Policy #${id} deleted.`);
+    if (id === $('#kbDraftId').value) {
+      $('#kbDraftCard').style.display = 'none';
+    }
+    await loadKbDrafts();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function openKbDraft(id) {
+  try {
+    const d = await adminApi(`/admin/kb/${id}`);
+    populateKbDraft(d);
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function loadKbDrafts() {
+  const tbody = $('#kbTableBody');
+  try {
+    const drafts = await adminApi('/admin/kb/drafts');
+    if (!drafts.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-xs text-slate-400">No policy documents in knowledge base. Upload one above.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = drafts.map(d => `
+      <tr class="hover:bg-slate-50/80 transition-colors">
+        <td class="py-3 px-4">
+          <b class="text-blue-600 hover:text-blue-700 cursor-pointer font-semibold" onclick="openKbDraft(${d.id})">${esc(d.scholarship_name || d.file_name)}</b>
+          <div class="text-xs text-slate-400 mt-0.5">${esc(d.file_name)} (${d.chunks_count} chunks)</div>
+        </td>
+        <td class="py-3 px-4 text-xs font-medium text-slate-700">${d.year} v${d.version}</td>
+        <td class="py-3 px-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold pill-${d.status === 'published' ? 'published' : 'draft'}">${esc(d.status)}</span></td>
+        <td class="py-3 px-4 text-right space-x-1.5">
+          <button class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" onclick="openKbDraft(${d.id})">Edit</button>
+          <button class="px-2.5 py-1 text-xs font-medium rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors" onclick="deleteKbDraft(${d.id})">Del</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-xs text-rose-600">${esc(err.message)}</td></tr>`;
+  }
+}
+
+if (ADMIN_TOKEN) {
+  initAdminPortal();
+} else {
+  $('#authStage').style.display = 'flex';
+}
+</script>
+</body>
+</html>

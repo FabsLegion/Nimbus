@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1120">
+  <title>Nimbus | University Scholarship Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #131c31;
+      --panel-hover: #182442;
+      --line: #ffffff14;
+      --line-bright: #ffffff26;
+      --tx: #f1f5f9;
+      --mut: #94a3b8;
+      --teal: #14b8a6;
+      --teal-glow: rgba(20, 184, 166, 0.25);
+      --blu: #38bdf8;
+      --blu-glow: rgba(56, 189, 248, 0.25);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(1200px 700px at 50% -10%, #14b8a61f, transparent),
+                  radial-gradient(800px 500px at 90% 100%, #38bdf814, transparent),
+                  var(--bg);
+      color: var(--tx);
+      font-family: Figtree, system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .logo {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+    .logo span { color: var(--teal); }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #14b8a622;
+      color: var(--teal);
+      border: 1px solid #14b8a644;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    main {
+      flex: 1;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: #ffffff0a;
+      border: 1px solid var(--line-bright);
+      color: #5eead4;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .hero-tag i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 10px var(--teal);
+    }
+    h1 {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 18px;
+    }
+    h1 span {
+      background: linear-gradient(135deg, #f1f5f9 40%, var(--teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.lead {
+      font-size: 18px;
+      color: var(--mut);
+      max-width: 640px;
+      line-height: 1.6;
+      margin-bottom: 48px;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      width: 100%;
+      max-width: 900px;
+      text-align: left;
+    }
+    @media (max-width: 720px) {
+      .cards-grid { grid-template-columns: 1fr; }
+    }
+    .portal-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: inherit;
+    }
+    .portal-card:hover {
+      transform: translateY(-4px);
+      background: var(--panel-hover);
+      border-color: var(--line-bright);
+      box-shadow: 0 20px 40px -15px #00000088;
+    }
+    .portal-card.student:hover {
+      border-color: var(--teal);
+      box-shadow: 0 20px 40px -15px var(--teal-glow);
+    }
+    .portal-card.office:hover {
+      border-color: var(--blu);
+      box-shadow: 0 20px 40px -15px var(--blu-glow);
+    }
+    .card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 20px;
+    }
+    .student .card-icon {
+      background: #14b8a622;
+      color: var(--teal);
+      border: 1px solid #14b8a644;
+    }
+    .office .card-icon {
+      background: #38bdf822;
+      color: var(--blu);
+      border: 1px solid #38bdf844;
+    }
+    .card-icon svg {
+      width: 26px;
+      height: 26px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .portal-card h2 {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .portal-card p {
+      color: var(--mut);
+      font-size: 14px;
+      line-height: 1.55;
+      margin-bottom: 24px;
+      flex: 1;
+    }
+    .card-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: gap 0.2s;
+    }
+    .student .card-btn { color: var(--teal); }
+    .office .card-btn { color: var(--blu); }
+    .portal-card:hover .card-btn { gap: 12px; }
+    footer {
+      padding: 24px;
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      border-top: 1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Nimbus<span>.</span><span class="badge">Scholarship System</span></div>
+</header>
+
+<main>
+  <div class="hero-tag"><i></i> University Financial Aid & Scholarship Network</div>
+  <h1>Intelligent Guidance.<br><span>Transparent Applications.</span></h1>
+  <p class="lead">Select your portal below to sign in, upload documentation, access AI policy assistance, or manage administrative knowledge bases.</p>
+
+  <div class="cards-grid">
+    <!-- Student Portal Card -->
+    <a href="/student" class="portal-card student" id="linkStudentPortal">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      </div>
+      <h2>Student Portal</h2>
+      <p>Sign in with your Student ID and secure PIN or register a new profile. Track your application checklist, upload required certificates, and chat with the AI assistant.</p>
+      <div class="card-btn">
+        <span>Enter Student Portal</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </a>
+
+    <!-- Office Portal Card -->
+    <a href="/admin" class="portal-card office" id="linkOfficePortal">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 9h6M15 15h6"/></svg>
+      </div>
+      <h2>Office Portal</h2>
+      <p>Staff authentication for the Financial Aid & Scholarship Office. Ingest official policies with PyMuPDF4LLM, review AI-drafted requirements, monitor student inquiries, and audit system health.</p>
+      <div class="card-btn">
+        <span>Enter Office Portal</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </a>
+  </div>
+</main>
+
+<footer>
+  Nimbus University Scholarship Guidance System &copy; 2026. All rights reserved.
+</footer>
+
+</body>
+</html>

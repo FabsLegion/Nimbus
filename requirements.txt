@@ -9,3 +9,6 @@ pytest
 fastapi
 uvicorn
 openai
+sqlmodel
+pymupdf4llm
+rank-bm25

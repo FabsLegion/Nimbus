@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1120">
+  <title>Nimbus | Office Admin Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #131c31;
+      --panel-alt: #182440;
+      --line: #ffffff14;
+      --line-bright: #ffffff26;
+      --tx: #f1f5f9;
+      --mut: #94a3b8;
+      --teal: #14b8a6;
+      --teal-hover: #0d9488;
+      --teal-light: #14b8a622;
+      --red: #f87171;
+      --red-bg: #ef444422;
+      --amb: #fbbf24;
+      --amb-bg: #f59e0b22;
+      --grn: #34d399;
+      --grn-bg: #10b98122;
+      --blu: #38bdf8;
+      --blu-bg: #38bdf822;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(1000px 600px at 80% -10%, #38bdf814, transparent), var(--bg);
+      color: var(--tx);
+      font: 15px/1.5 Figtree, system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    h1, h2, h3, h4 {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      letter-spacing: -0.015em;
+    }
+    button, input, select, textarea {
+      font: inherit;
+      color: inherit;
+    }
+    button {
+      cursor: pointer;
+      border: 0;
+      transition: all 0.15s ease;
+    }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid var(--teal);
+      outline-offset: 2px;
+    }
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--teal);
+      color: #042f2a;
+      padding: 11px 22px;
+      border-radius: 12px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px -5px #00000088;
+      display: none;
+      z-index: 100;
+    }
+
+    /* ---------------- STAGE 1: ADMIN LOGIN ---------------- */
+    #authStage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px #00000099;
+      text-align: center;
+    }
+    .auth-card h1 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .auth-card h1 span { color: var(--blu); }
+    .auth-card p {
+      color: var(--mut);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--blu);
+      color: #082f49;
+      font-weight: 700;
+      padding: 10px 18px;
+      border-radius: 10px;
+      width: 100%;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .btn:hover { background: #0ea5e9; }
+    .btn-teal {
+      background: var(--teal);
+      color: #042f2a;
+    }
+    .btn-teal:hover { background: var(--teal-hover); }
+    .btn-danger {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid #ef444455;
+    }
+    .btn-danger:hover { background: #ef444433; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--line-bright);
+      color: var(--tx);
+    }
+    .btn-outline:hover { background: var(--line); }
+
+    /* ---------------- STAGE 2: ADMIN PORTAL ---------------- */
+    #portalStage {
+      display: none;
+      min-height: 100vh;
+      grid-template-columns: 260px 1fr;
+    }
+    @media (max-width: 860px) {
+      #portalStage { grid-template-columns: 1fr; }
+    }
+    .sidebar {
+      background: #0d1424;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .side-brand {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 24px;
+      padding-left: 8px;
+    }
+    .side-brand span { color: var(--blu); }
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: var(--mut);
+      font-weight: 600;
+      font-size: 14px;
+      background: transparent;
+      text-align: left;
+    }
+    .nav-item:hover {
+      background: var(--line);
+      color: var(--tx);
+    }
+    .nav-item.active {
+      background: var(--blu-bg);
+      color: var(--blu);
+    }
+    .nav-item svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .logout-btn {
+      color: var(--red);
+      background: var(--red-bg);
+      border: 1px solid #ef444433;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: auto;
+    }
+    .logout-btn:hover { background: #ef444433; }
+
+    /* Content Area */
+    .content-area {
+      padding: 24px 32px 60px;
+      max-width: 1140px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .page-title {
+      font-size: 26px;
+      margin-bottom: 4px;
+    }
+    .page-subtitle {
+      color: var(--mut);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    /* KPI Grid */
+    .grid4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .grid4 { grid-template-columns: 1fr 1fr; }
+    }
+    .kpi small { color: var(--mut); font-size: 13px; }
+    .kpi div { font: 800 32px 'Bricolage Grotesque'; margin-top: 4px; }
+    .bar {
+      height: 8px;
+      background: var(--teal);
+      border-radius: 4px;
+      margin: 4px 0 12px;
+    }
+
+    /* Items list */
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #16213a;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border: 1px solid var(--line);
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 99px;
+      text-transform: uppercase;
+    }
+    .pill-published, .pill-OK { background: var(--grn-bg); color: var(--grn); border: 1px solid #10b98144; }
+    .pill-draft, .pill-INVALID { background: var(--amb-bg); color: var(--amb); border: 1px solid #f59e0b44; }
+    .pill-MISSING { background: var(--red-bg); color: var(--red); border: 1px solid #ef444444; }
+    .pill-WRONG_CATEGORY { background: #a855f722; color: #c084fc; border: 1px solid #a855f744; }
+
+    /* KB Section Styles */
+    .dropzone {
+      border: 2px dashed var(--line-bright);
+      border-radius: 12px;
+      padding: 30px 20px;
+      text-align: center;
+      background: #090e1a;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+    .dropzone:hover {
+      border-color: var(--teal);
+      background: #14b8a60a;
+    }
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--mut);
+      margin-bottom: 5px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    input[type=text], input[type=number], input[type=password], textarea {
+      width: 100%;
+      background: #090e1a;
+      border: 1px solid var(--line-bright);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: var(--tx);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .chunks-box {
+      max-height: 200px;
+      overflow-y: auto;
+      background: #090e1a;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .chunk-item {
+      padding: 6px 10px;
+      background: #131c31;
+      border-radius: 6px;
+      border-left: 3px solid var(--teal);
+      font-size: 13px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th {
+      text-align: left;
+      padding: 10px;
+      color: var(--mut);
+      font-size: 12px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--line);
+    }
+    td { padding: 12px 10px; border-bottom: 1px solid var(--line); }
+    #kbLoadingOverlay {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: #14b8a61a;
+      border: 1px solid var(--teal);
+      border-radius: 8px;
+      padding: 12px;
+      color: #5eead4;
+      margin-bottom: 16px;
+    }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #5eead444;
+      border-top-color: #5eead4;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ================= STAGE 1: ADMIN LOGIN ================= -->
+<div id="authStage">
+  <div class="auth-card">
+    <div style="font-size:36px;margin-bottom:12px">🛡️</div>
+    <h1>Office<span>Portal</span></h1>
+    <p>Staff authentication for Financial Aid & Scholarship Office</p>
+
+    <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+      <div class="form-group" style="text-align:left">
+        <label for="adminPasscode">Security Passcode (ADMIN_PASSCODE)</label>
+        <input type="password" id="adminPasscode" required placeholder="Enter administrative passcode">
+      </div>
+      <button type="submit" class="btn">Authenticate Staff Access</button>
+    </form>
+
+    <div style="margin-top:20px;font-size:13px">
+      <a href="/" style="color:var(--mut);text-decoration:none">← Return to Portal Hub</a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STAGE 2: ADMIN PORTAL ================= -->
+<div id="portalStage">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="side-brand">Nimbus<span>.</span> <span style="font-size:12px;font-weight:600;color:var(--blu)">OFFICE</span></div>
+
+    <nav class="nav-menu">
+      <button class="nav-item active" onclick="switchView('overview')" id="navOverview">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Overview</span>
+      </button>
+      <button class="nav-item" onclick="switchView('cases')" id="navCases">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Cases & Queries</span>
+      </button>
+      <button class="nav-item" onclick="switchView('issues')" id="navIssues">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>Document Issues</span>
+      </button>
+      <button class="nav-item" onclick="switchView('kb')" id="navKb">
+        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>Knowledge Base</span>
+      </button>
+      <button class="nav-item" onclick="switchView('health')" id="navHealth">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>AI Health</span>
+      </button>
+    </nav>
+
+    <button class="logout-btn" onclick="handleAdminLogout()">Sign Out</button>
+  </aside>
+
+  <!-- Content Screens -->
+  <main class="content-area">
+
+    <!-- 1. OVERVIEW SCREEN -->
+    <section id="screenOverview" class="screen active">
+      <h2 class="page-title">Operational Overview</h2>
+      <p class="page-subtitle">Real-time metrics, automated AI handling rates, and student inquiries.</p>
+
+      <div class="grid4" id="kpiGrid">
+        <div class="card kpi"><small>Total Inquiries</small><div id="kpiTotal">0</div></div>
+        <div class="card kpi"><small>Unresolved / Escalated</small><div id="kpiUnresolved" style="color:var(--red)">0</div></div>
+        <div class="card kpi"><small>Handled by AI</small><div id="kpiRate" style="color:var(--grn)">100%</div></div>
+        <div class="card kpi"><small>Document Problems</small><div id="kpiProblems" style="color:var(--amb)">0</div></div>
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <h3 style="margin-bottom:12px">Query Categories Breakdown</h3>
+        <div id="catsChart"></div>
+      </div>
+    </section>
+
+    <!-- 2. CASES SCREEN -->
+    <section id="screenCases" class="screen">
+      <h2 class="page-title">Student Cases & Escalations</h2>
+      <p class="page-subtitle">Inquiries escalated by AI routing or requiring administrative intervention.</p>
+      
+      <div class="card">
+        <div id="casesList">Loading cases...</div>
+      </div>
+    </section>
+
+    <!-- 3. DOCUMENT ISSUES SCREEN -->
+    <section id="screenIssues" class="screen">
+      <h2 class="page-title">Document Issues Queue</h2>
+      <p class="page-subtitle">Students with missing, invalid, or mismatched certificates needing attention.</p>
+      
+      <div class="card">
+        <div id="issuesList">Loading document issues...</div>
+      </div>
+    </section>
+
+    <!-- 4. KNOWLEDGE BASE SCREEN (Task A4) -->
+    <section id="screenKb" class="screen">
+      <h2 class="page-title">Knowledge Base Management</h2>
+      <p class="page-subtitle">Upload official policies (PDF/DOCX/TXT). AI extracts structured rules; review, edit, and publish to SQLite & ChromaDB.</p>
+
+      <!-- Upload Zone -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">Upload Scholarship Document</h3>
+        <div class="dropzone" onclick="$('#kbFileInput').click()">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <h4 style="margin:8px 0 4px">Drop PDF here or click to browse</h4>
+          <p style="color:var(--mut);font-size:13px;margin:0">Text extraction with PyMuPDF4LLM + structured JSON extraction with retry</p>
+          <input type="file" id="kbFileInput" accept=".pdf,.docx,.txt" style="display:none" onchange="uploadKbDoc()">
+        </div>
+
+        <div id="kbLoadingOverlay">
+          <div class="spinner"></div>
+          <span id="kbLoadingText">Extracting text with PyMuPDF4LLM and extracting metadata draft...</span>
+        </div>
+      </div>
+
+      <!-- Draft Editor Card -->
+      <div class="card" id="kbDraftCard" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="display:flex;gap:10px;align-items:center">
+            <h3>Policy Draft Details</h3>
+            <span class="pill pill-draft" id="kbDraftBadge">Draft</span>
+          </div>
+          <small style="color:var(--mut)" id="kbDraftIdLabel"></small>
+        </div>
+
+        <form id="kbDraftForm" onsubmit="event.preventDefault()">
+          <input type="hidden" id="kbDraftId">
+
+          <div class="form-group">
+            <label>Source File Name</label>
+            <input type="text" id="kbDraftFileName" readonly style="opacity:0.8;background:#090e1a">
+          </div>
+
+          <div class="form-group">
+            <label>Scholarship Name *</label>
+            <input type="text" id="kbDraftName" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Academic Year</label>
+              <input type="number" id="kbDraftYear" required>
+            </div>
+            <div class="form-group">
+              <label>Policy Version</label>
+              <input type="number" id="kbDraftVer" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Required Documents (one per line)</label>
+            <textarea id="kbDraftReqDocs" rows="3"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Dates (JSON)</label>
+            <textarea id="kbDraftDates" rows="3"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Offices (JSON)</label>
+            <textarea id="kbDraftOffices" rows="2"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Extracted Chunks (<span id="kbChunkCount">0</span> sections)</label>
+            <div class="chunks-box" id="kbChunksPreview"></div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button type="button" class="btn btn-teal" style="width:auto" onclick="publishKbDraft()">Publish to Knowledge Base</button>
+            <button type="button" class="btn btn-danger" style="width:auto" onclick="deleteKbDraft()">Delete Policy</button>
+            <button type="button" class="btn btn-outline" style="width:auto" onclick="$('#kbDraftCard').style.display='none'">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Published/Draft Policies Table -->
+      <div class="card">
+        <h3 style="margin-bottom:12px">Policy Documents in Knowledge Base</h3>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Document / Program</th>
+                <th>Year & Version</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="kbTableBody">
+              <tr><td colspan="4" style="color:var(--mut);text-align:center;padding:20px">Loading policies...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. AI HEALTH SCREEN -->
+    <section id="screenHealth" class="screen">
+      <h2 class="page-title">AI Provider Health & Auditing</h2>
+      <p class="page-subtitle">Recent LLM gateway calls, latency metrics, and failover status.</p>
+      
+      <div class="card">
+        <div id="healthLog">Loading logs...</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let ADMIN_TOKEN = localStorage.getItem('nimbus_admin_token') || '';
+
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2800);
+}
+
+async function handleAdminLogin(e) {
+  e.preventDefault();
+  const passcode = $('#adminPasscode').value.trim();
+
+  try {
+    const res = await fetch('/api/auth/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passcode })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Authorization failed');
+
+    ADMIN_TOKEN = data.token;
+    localStorage.setItem('nimbus_admin_token', ADMIN_TOKEN);
+    toast('Staff access authorized');
+    initAdminPortal();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function handleAdminLogout() {
+  ADMIN_TOKEN = '';
+  localStorage.removeItem('nimbus_admin_token');
+  $('#portalStage').style.display = 'none';
+  $('#authStage').style.display = 'flex';
+}
+
+function switchView(view) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+
+  const screenId = 'screen' + view.charAt(0).toUpperCase() + view.slice(1);
+  const navId = 'nav' + view.charAt(0).toUpperCase() + view.slice(1);
+  const s = $('#' + screenId);
+  const b = $('#' + navId);
+  if (s) s.classList.add('active');
+  if (b) b.classList.add('active');
+
+  if (view === 'kb') loadKbDrafts();
+}
+
+async function adminApi(path, method = 'GET', body = null) {
+  const headers = {};
+  if (ADMIN_TOKEN) headers['Authorization'] = `Bearer ${ADMIN_TOKEN}`;
+  if (body) headers['Content-Type'] = 'application/json';
+
+  const res = await fetch(path, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null
+  });
+  if (res.status === 401) {
+    handleAdminLogout();
+    throw new Error('Admin session expired');
+  }
+  return res.json();
+}
+
+async function initAdminPortal() {
+  try {
+    const me = await adminApi('/api/auth/me');
+    if (me.role !== 'admin') {
+      handleAdminLogout();
+      return;
+    }
+
+    $('#authStage').style.display = 'none';
+    $('#portalStage').style.display = 'grid';
+
+    await refreshAdminData();
+    loadKbDrafts();
+  } catch (err) {
+    handleAdminLogout();
+  }
+}
+
+async function refreshAdminData() {
+  const d = await adminApi('/api/admin');
+  
+  // KPIs
+  $('#kpiTotal').textContent = d.total;
+  $('#kpiUnresolved').textContent = d.unresolved.length;
+  const rate = d.total ? Math.round((1 - d.unresolved.length / d.total) * 100) : 100;
+  $('#kpiRate').textContent = `${rate}%`;
+  $('#kpiProblems').textContent = d.problems.length;
+
+  // Chart
+  const mx = Math.max(1, ...Object.values(d.categories));
+  $('#catsChart').innerHTML = Object.entries(d.categories).map(([k, v]) => `
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <b>${esc(k)}</b><span>${v} inquiries</span>
+      </div>
+      <div class="bar" style="width:${v / mx * 100}%"></div>
+    </div>
+  `).join('') || '<p style="color:var(--mut)">No queries logged yet.</p>';
+
+  // Cases List
+  const casesBox = $('#casesList');
+  if (!d.unresolved.length && !d.recent.length) {
+    casesBox.innerHTML = '<p style="color:var(--mut)">No pending cases.</p>';
+  } else {
+    casesBox.innerHTML = (d.unresolved.length ? d.unresolved : d.recent).map(r => `
+      <div class="item">
+        <div>
+          <b>${esc(r.student_id)}</b>: "${esc(r.text)}"
+          <div style="font-size:12px;color:var(--mut);margin-top:2px">Assigned: ${esc(r.office || r.category)}</div>
+        </div>
+        <span class="pill ${r.resolved ? 'pill-OK' : 'pill-INVALID'}">${r.resolved ? 'Resolved' : 'Escalated'}</span>
+      </div>
+    `).join('');
+  }
+
+  // Document Issues
+  const issuesBox = $('#issuesList');
+  issuesBox.innerHTML = d.problems.length ? d.problems.map(p => `
+    <div class="item">
+      <div>
+        <b>${esc(p.student)}</b> — ${esc(p.document)}
+        ${p.detail ? `<div style="font-size:12px;color:var(--mut)">${esc(p.detail)}</div>` : ''}
+      </div>
+      <span class="pill pill-${p.problem}">${esc(p.problem.replace('_', ' '))}</span>
+    </div>
+  `).join('') : '<p style="color:var(--mut)">All uploaded documents are verified.</p>';
+
+  // Health Log
+  const healthBox = $('#healthLog');
+  healthBox.innerHTML = d.llm_log.length ? d.llm_log.map(l => `
+    <div class="item">
+      <div><b>${esc(l.provider)}</b></div>
+      <div style="color:var(--mut);font-size:13px">${l.sec}s latency</div>
+      <span class="pill ${l.ok ? 'pill-OK' : 'pill-MISSING'}">${l.ok ? 'Healthy' : 'Failed'}</span>
+    </div>
+  `).join('') : '<p style="color:var(--mut)">No LLM calls recorded in this session.</p>';
+}
+
+// ---------------- KNOWLEDGE BASE (A4) ----------------
+
+async function uploadKbDoc() {
+  const fl = $('#kbFileInput');
+  if (!fl.files.length) return;
+  const file = fl.files[0];
+
+  const overlay = $('#kbLoadingOverlay');
+  overlay.style.display = 'flex';
+  $('#kbLoadingText').textContent = `Extracting ${file.name} with PyMuPDF4LLM...`;
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    const res = await fetch('/admin/kb/upload', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
+      body: fd
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Upload failed');
+    }
+    const data = await res.json();
+    toast('Extracted metadata draft!');
+    populateKbDraft(data);
+    await loadKbDrafts();
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    overlay.style.display = 'none';
+    fl.value = '';
+  }
+}
+
+function populateKbDraft(d) {
+  $('#kbDraftCard').style.display = 'block';
+  $('#kbDraftId').value = d.id;
+  $('#kbDraftIdLabel').textContent = `Policy #${d.id}`;
+  $('#kbDraftFileName').value = d.file_name;
+  $('#kbDraftName').value = d.scholarship_name || '';
+  $('#kbDraftYear').value = d.year || 2026;
+  $('#kbDraftVer').value = d.version || 1;
+
+  const docs = Array.isArray(d.required_documents) ? d.required_documents : [];
+  $('#kbDraftReqDocs').value = docs.join('\n');
+  $('#kbDraftDates').value = JSON.stringify(d.dates || {}, null, 2);
+  $('#kbDraftOffices').value = JSON.stringify(d.offices || [], null, 2);
+
+  const badge = $('#kbDraftBadge');
+  badge.textContent = d.status || 'draft';
+  badge.className = `pill pill-${d.status === 'published' ? 'published' : 'draft'}`;
+
+  const chunks = d.chunks || [];
+  $('#kbChunkCount').textContent = chunks.length;
+  $('#kbChunksPreview').innerHTML = chunks.map(c => `
+    <div class="chunk-item">
+      <div style="font-size:11px;color:var(--mut);font-weight:600">Page ${c.page || 1}</div>
+      <div>${esc(c.text)}</div>
+    </div>
+  `).join('') || '<div style="color:var(--mut)">No chunks extracted</div>';
+
+  $('#kbDraftCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function publishKbDraft() {
+  const id = $('#kbDraftId').value;
+  if (!id) return;
+
+  let dates = {}, offices = [];
+  try { dates = JSON.parse($('#kbDraftDates').value || '{}'); } catch (e) { alert('Invalid Dates JSON'); return; }
+  try { offices = JSON.parse($('#kbDraftOffices').value || '[]'); } catch (e) { alert('Invalid Offices JSON'); return; }
+
+  const reqDocs = $('#kbDraftReqDocs').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  const payload = {
+    scholarship_name: $('#kbDraftName').value.trim(),
+    year: parseInt($('#kbDraftYear').value, 10),
+    version: parseInt($('#kbDraftVer').value, 10),
+    required_documents: reqDocs,
+    dates,
+    offices
+  };
+
+  try {
+    const res = await adminApi(`/admin/kb/${id}/publish`, 'POST', payload);
+    toast(`Published! ${res.chunks_indexed} chunks indexed in ChromaDB.`);
+    $('#kbDraftBadge').textContent = 'published';
+    $('#kbDraftBadge').className = 'pill pill-published';
+    await loadKbDrafts();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function deleteKbDraft(targetId) {
+  const id = targetId || $('#kbDraftId').value;
+  if (!id) return;
+  if (!confirm(`Delete policy #${id}? This will remove its chunks from ChromaDB.`)) return;
+
+  try {
+    await adminApi(`/admin/kb/${id}`, 'DELETE');
+    toast(`Policy #${id} deleted.`);
+    if (id === $('#kbDraftId').value) {
+      $('#kbDraftCard').style.display = 'none';
+    }
+    await loadKbDrafts();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function openKbDraft(id) {
+  try {
+    const d = await adminApi(`/admin/kb/${id}`);
+    populateKbDraft(d);
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function loadKbDrafts() {
+  const tbody = $('#kbTableBody');
+  try {
+    const drafts = await adminApi('/admin/kb/drafts');
+    if (!drafts.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--mut);text-align:center;padding:20px">No policies in knowledge base. Upload a document above.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = drafts.map(d => `
+      <tr>
+        <td>
+          <b style="cursor:pointer;color:var(--teal)" onclick="openKbDraft(${d.id})">${esc(d.scholarship_name || d.file_name)}</b>
+          <div style="font-size:12px;color:var(--mut)">${esc(d.file_name)} (${d.chunks_count} chunks)</div>
+        </td>
+        <td>${d.year} v${d.version}</td>
+        <td><span class="pill pill-${d.status === 'published' ? 'published' : 'draft'}">${esc(d.status)}</span></td>
+        <td>
+          <button class="btn btn-outline" style="padding:4px 8px;font-size:12px;width:auto;display:inline" onclick="openKbDraft(${d.id})">Edit</button>
+          <button class="btn btn-danger" style="padding:4px 8px;font-size:12px;width:auto;display:inline" onclick="deleteKbDraft(${d.id})">Del</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--red);text-align:center;padding:20px">${esc(err.message)}</td></tr>`;
+  }
+}
+
+if (ADMIN_TOKEN) {
+  initAdminPortal();
+} else {
+  $('#authStage').style.display = 'flex';
+}
+</script>
+</body>
+</html>
