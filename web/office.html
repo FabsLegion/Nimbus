@@ -111,6 +111,10 @@
           <span class="material-symbols-outlined text-[20px] text-slate-400">menu_book</span>
           Knowledge Base
         </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('data')" id="navData">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">dataset</span>
+          Data &amp; Imports
+        </button>
         <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('health')" id="navHealth">
           <span class="material-symbols-outlined text-[20px] text-slate-400">monitoring</span>
           AI Health
@@ -318,7 +322,151 @@
         </div>
       </section>
 
+      <!-- 6. DATA MANAGEMENT & BULK IMPORTS SCREEN -->
+      <section id="screenData" class="screen space-y-6">
+        <!-- Live Deadline Banner Setting Box -->
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-display font-bold text-base text-slate-900">Student Portal Deadline Alert Banner</h3>
+              <p class="text-xs text-slate-500">Configure the top notification banner shown across all student workspace views.</p>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">Broadcast Alert</span>
+          </div>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <input type="text" id="adminDeadlineBannerInput" placeholder="e.g. Applications close Tonight, 11:59 PM. Verify all required documents!" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all">
+            <button type="button" onclick="saveAdminDeadlineBanner()" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm shadow-sm transition-all shrink-0">Update Banner</button>
+          </div>
+        </div>
+
+        <!-- Table Management Navigation Subtabs -->
+        <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <!-- Subtab pills -->
+            <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl" id="dataSubtabs">
+              <button type="button" onclick="switchDataTable('scholarships')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-tab-btn active bg-white text-slate-900 shadow-xs" data-target="scholarships">Scholarships</button>
+              <button type="button" onclick="switchDataTable('scholarship_facts')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-tab-btn text-slate-600 hover:text-slate-900" data-target="scholarship_facts">Scholarship Facts</button>
+              <button type="button" onclick="switchDataTable('required_documents')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-tab-btn text-slate-600 hover:text-slate-900" data-target="required_documents">Required Documents</button>
+              <button type="button" onclick="switchDataTable('timeline_events')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-tab-btn text-slate-600 hover:text-slate-900" data-target="timeline_events">Timeline Events</button>
+              <button type="button" onclick="switchDataTable('offices')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-tab-btn text-slate-600 hover:text-slate-900" data-target="offices">Offices</button>
+              <button type="button" onclick="switchDataTable('announcements')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-tab-btn text-slate-600 hover:text-slate-900" data-target="announcements">Announcements</button>
+              <button type="button" onclick="switchDataTable('audit_log')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-tab-btn text-slate-600 hover:text-slate-900" data-target="audit_log">Audit Log</button>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex items-center gap-2" id="dataTableActions">
+              <button type="button" onclick="openCrudModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-all">
+                <span class="material-symbols-outlined text-[16px]">add</span>
+                Add Record
+              </button>
+              <button type="button" onclick="openImportModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-sm transition-all">
+                <span class="material-symbols-outlined text-[16px]">upload_file</span>
+                Bulk Import (CSV/XLSX)
+              </button>
+              <button type="button" onclick="loadActiveDataTable()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors" title="Reload Table">
+                <span class="material-symbols-outlined text-[18px]">refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Table Content -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead id="dataGridHead" class="border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <!-- Dynamically injected -->
+              </thead>
+              <tbody id="dataGridBody" class="divide-y divide-slate-100">
+                <tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">Loading records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
     </main>
+  </div>
+</div>
+
+<!-- ================= MODALS: CRUD & IMPORT ================= -->
+<!-- 1. CRUD Record Modal -->
+<div id="crudModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs items-center justify-center p-4" style="display:none">
+  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl space-y-4">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div>
+        <h3 id="crudModalTitle" class="font-display font-bold text-base text-slate-900">Add Record</h3>
+        <span id="crudModalTableBadge" class="text-[11px] font-semibold text-slate-400">Table: scholarships</span>
+      </div>
+      <button type="button" onclick="closeCrudModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <form id="crudForm" onsubmit="handleCrudSubmit(event)" class="space-y-3.5">
+      <input type="hidden" id="crudRecordId" value="">
+      <div id="crudFormFields" class="space-y-3">
+        <!-- Injected dynamically per table -->
+      </div>
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+        <button type="button" onclick="closeCrudModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors">Cancel</button>
+        <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-sm transition-colors">Save Record</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. Bulk Import Modal -->
+<div id="importModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs items-center justify-center p-4" style="display:none">
+  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl p-6 shadow-xl space-y-5 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div>
+        <h3 class="font-display font-bold text-base text-slate-900">Bulk Data Import</h3>
+        <span id="importModalTableBadge" class="text-xs font-semibold text-blue-600">Target Table: scholarships</span>
+      </div>
+      <button type="button" onclick="closeImportModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <!-- Dropzone / File Picker -->
+    <div class="space-y-2">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Select File (CSV or XLSX)</label>
+      <div class="flex items-center gap-3">
+        <input type="file" id="importFileInput" accept=".csv, .xlsx" class="flex-1 text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+        <button type="button" onclick="previewImportFile()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-sm transition-all shrink-0">Preview Import</button>
+      </div>
+      <p id="importTemplateNotice" class="text-xs text-slate-400">Template files available in: <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-600">nimbus-samples/admin_imports/</code></p>
+    </div>
+
+    <!-- Preview Results Container -->
+    <div id="importPreviewContainer" style="display:none" class="space-y-4 pt-3 border-t border-slate-100">
+      <div class="flex items-center gap-3">
+        <span id="importStatTotal" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">Total: 0</span>
+        <span id="importStatValid" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Valid: 0</span>
+        <span id="importStatErrors" class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">Errors: 0</span>
+      </div>
+
+      <!-- Errors Box if any -->
+      <div id="importErrorsList" style="display:none" class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-1 max-h-36 overflow-y-auto"></div>
+
+      <!-- Sample Table -->
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Parsed Preview Sample (Up to 10 Rows)</h4>
+        <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-48 overflow-y-auto">
+          <table class="w-full text-left text-xs">
+            <thead id="importSampleHead" class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold sticky top-0"></thead>
+            <tbody id="importSampleBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <span class="text-xs text-slate-500">Inspect the preview above before committing changes to database.</span>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeImportModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors">Cancel</button>
+          <button type="button" id="importCommitBtn" onclick="commitImportFile()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-colors">Commit &amp; Save Records</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -383,10 +531,11 @@ function switchView(view) {
     if (icon) icon.className = 'material-symbols-outlined text-[20px] text-blue-600';
   }
 
-  const titles = { overview: 'Office Review Console', cases: 'Cases & Escalations', issues: 'Document Issues Queue', kb: 'Knowledge Base Management', health: 'AI Health & Telemetry' };
+  const titles = { overview: 'Office Review Console', cases: 'Cases & Escalations', issues: 'Document Issues Queue', kb: 'Knowledge Base Management', data: 'Data Management & Bulk Imports', health: 'AI Health & Telemetry' };
   $('#currentScreenTitle').textContent = titles[view] || 'Console';
 
   if (view === 'kb') loadKbDrafts();
+  if (view === 'data') initDataView();
 }
 
 async function adminApi(path, method = 'GET', body = null) {
@@ -636,6 +785,408 @@ async function loadKbDrafts() {
     `).join('');
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-xs text-rose-600">${esc(err.message)}</td></tr>`;
+  }
+}
+
+// ---------------- DATA MANAGEMENT & BULK IMPORTS (B1) ----------------
+
+let CURRENT_DATA_TABLE = 'scholarships';
+let CURRENT_TABLE_DATA = [];
+
+const TABLE_SCHEMAS = {
+  scholarships: {
+    label: 'Scholarships',
+    columns: [
+      { key: 'name', label: 'Scholarship Name', type: 'text', required: true },
+      { key: 'description', label: 'Description', type: 'text', required: false },
+      { key: 'year', label: 'Academic Year', type: 'number', default: 2026 },
+      { key: 'version', label: 'Version', type: 'number', default: 1 }
+    ],
+    primaryKey: 'id',
+    displayCol: 'name'
+  },
+  scholarship_facts: {
+    label: 'Scholarship Facts & Benefits',
+    columns: [
+      { key: 'scholarship_id', label: 'Scholarship Name', type: 'select_scholarship', required: true },
+      { key: 'label', label: 'Fact Label (e.g. Fee Reduction, Stipend)', type: 'text', required: true },
+      { key: 'value', label: 'Benefit Value (e.g. 75% Tuition Fee Waiver)', type: 'text', required: true },
+      { key: 'sort_order', label: 'Sort Order', type: 'number', default: 1 }
+    ],
+    primaryKey: 'id',
+    displayCol: 'label'
+  },
+  required_documents: {
+    label: 'Required Documents',
+    columns: [
+      { key: 'scholarship_name', label: 'Scholarship Name', type: 'select_scholarship', required: true },
+      { key: 'doc_type', label: 'Document Type (e.g. Marksheet, Fee Receipt)', type: 'text', required: true },
+      { key: 'description', label: 'Description / Instructions', type: 'text', required: false }
+    ],
+    primaryKey: 'id',
+    displayCol: 'doc_type'
+  },
+  timeline_events: {
+    label: 'Timeline Events',
+    columns: [
+      { key: 'event_key', label: 'Event Key (e.g. app_open, deadline)', type: 'text', required: true },
+      { key: 'title', label: 'Event Title', type: 'text', required: true },
+      { key: 'date_str', label: 'Date Display String', type: 'text', required: true },
+      { key: 'order_num', label: 'Timeline Order', type: 'number', default: 1 }
+    ],
+    primaryKey: 'id',
+    displayCol: 'title'
+  },
+  offices: {
+    label: 'Offices & Routing',
+    columns: [
+      { key: 'category', label: 'Category / Code (e.g. SCHOLARSHIP, HOSTEL)', type: 'text', required: true },
+      { key: 'name', label: 'Office Department Name', type: 'text', required: true },
+      { key: 'email', label: 'Official Email', type: 'text', required: false },
+      { key: 'phone', label: 'Phone / Extension', type: 'text', required: false },
+      { key: 'description', label: 'Description', type: 'text', required: false },
+      { key: 'routing_keywords', label: 'Routing Keywords (comma-separated)', type: 'text', required: false }
+    ],
+    primaryKey: 'id',
+    displayCol: 'name'
+  },
+  announcements: {
+    label: 'Announcements',
+    columns: [
+      { key: 'title', label: 'Announcement Title', type: 'text', required: true },
+      { key: 'body', label: 'Body Text', type: 'textarea', required: true },
+      { key: 'priority', label: 'Priority', type: 'select', options: ['INFORMATIONAL', 'ACTION REQUIRED', 'URGENT', 'DEADLINE'], default: 'INFORMATIONAL' },
+      { key: 'active', label: 'Status', type: 'select', options: [{val: 1, label: 'Active'}, {val: 0, label: 'Inactive'}], default: 1 }
+    ],
+    primaryKey: 'id',
+    displayCol: 'title'
+  }
+};
+
+let KNOWN_SCHOLARSHIPS = [];
+
+async function initDataView() {
+  try {
+    const banner = await adminApi('/api/admin/settings/deadline-banner');
+    if (banner && banner.text) {
+      $('#adminDeadlineBannerInput').value = banner.text;
+    }
+  } catch (e) {}
+
+  try {
+    const schs = await adminApi('/api/admin/crud/scholarships');
+    KNOWN_SCHOLARSHIPS = (schs || []).map(s => s.name);
+  } catch (e) {}
+
+  await loadActiveDataTable();
+}
+
+async function saveAdminDeadlineBanner() {
+  const text = $('#adminDeadlineBannerInput').value.trim();
+  if (!text) {
+    alert('Banner text cannot be empty');
+    return;
+  }
+  try {
+    await adminApi('/api/admin/settings/deadline-banner', 'POST', { text });
+    toast('Deadline banner updated!');
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function switchDataTable(table) {
+  CURRENT_DATA_TABLE = table;
+  document.querySelectorAll('.data-tab-btn').forEach(btn => {
+    if (btn.getAttribute('data-target') === table) {
+      btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-tab-btn active bg-white text-slate-900 shadow-xs';
+    } else {
+      btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-tab-btn text-slate-600 hover:text-slate-900';
+    }
+  });
+
+  const actions = $('#dataTableActions');
+  if (table === 'audit_log') {
+    actions.style.display = 'none';
+  } else {
+    actions.style.display = 'flex';
+  }
+
+  loadActiveDataTable();
+}
+
+async function loadActiveDataTable() {
+  const thead = $('#dataGridHead');
+  const tbody = $('#dataGridBody');
+  tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">Loading records...</td></tr>';
+
+  if (CURRENT_DATA_TABLE === 'audit_log') {
+    thead.innerHTML = `
+      <tr>
+        <th class="py-3 px-4">Timestamp</th>
+        <th class="py-3 px-4">Operator</th>
+        <th class="py-3 px-4">Action / Modification Description</th>
+      </tr>
+    `;
+    try {
+      const logs = await adminApi('/api/admin/audit-logs');
+      if (!logs.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="py-6 text-center text-xs text-slate-400">No audit log entries recorded yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = logs.map(l => `
+        <tr class="hover:bg-slate-50/80 transition-colors">
+          <td class="py-3 px-4 text-xs font-mono text-slate-500 whitespace-nowrap">${esc(l.when)}</td>
+          <td class="py-3 px-4 text-xs font-semibold text-slate-900">${esc(l.who)}</td>
+          <td class="py-3 px-4 text-xs text-slate-700">${esc(l.what)}</td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-xs text-rose-600">${esc(err.message)}</td></tr>`;
+    }
+    return;
+  }
+
+  const schema = TABLE_SCHEMAS[CURRENT_DATA_TABLE];
+  if (!schema) return;
+
+  const cols = schema.columns;
+  thead.innerHTML = `
+    <tr>
+      ${cols.map(c => `<th class="py-3 px-4">${esc(c.label)}</th>`).join('')}
+      <th class="py-3 px-4 text-right">Actions</th>
+    </tr>
+  `;
+
+  try {
+    const rows = await adminApi(`/api/admin/crud/${CURRENT_DATA_TABLE}`);
+    CURRENT_TABLE_DATA = rows || [];
+    if (!CURRENT_TABLE_DATA.length) {
+      tbody.innerHTML = `<tr><td colspan="${cols.length + 1}" class="py-6 text-center text-xs text-slate-400">No records found in table '${schema.label}'. Click 'Add Record' or 'Bulk Import' above.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = CURRENT_TABLE_DATA.map(r => `
+      <tr class="hover:bg-slate-50/80 transition-colors">
+        ${cols.map(c => {
+          let val = r[c.key] ?? '';
+          if (c.key === 'active') {
+            return `<td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ${val ? 'pill-OK' : 'pill-INVALID'}">${val ? 'Active' : 'Inactive'}</span></td>`;
+          }
+          if (c.key === 'priority') {
+            return `<td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-xs font-semibold pill-${val}">${esc(val)}</span></td>`;
+          }
+          return `<td class="py-3 px-4 text-xs text-slate-700 max-w-xs truncate">${esc(val)}</td>`;
+        }).join('')}
+        <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+          <button type="button" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer" onclick="openCrudModal(${r[schema.primaryKey]})">Edit</button>
+          <button type="button" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors cursor-pointer" onclick="deleteDataRecord(${r[schema.primaryKey]}, '${esc(r[schema.displayCol] || '')}')">Del</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="${cols.length + 1}" class="py-6 text-center text-xs text-rose-600">${esc(err.message)}</td></tr>`;
+  }
+}
+
+function openCrudModal(recordId = null) {
+  const schema = TABLE_SCHEMAS[CURRENT_DATA_TABLE];
+  if (!schema) return;
+
+  $('#crudModalTableBadge').textContent = `Table: ${schema.label}`;
+  $('#crudRecordId').value = recordId !== null ? recordId : '';
+  $('#crudModalTitle').textContent = recordId !== null ? `Edit ${schema.label} Record` : `Add New ${schema.label} Record`;
+
+  let record = {};
+  if (recordId !== null) {
+    record = CURRENT_TABLE_DATA.find(r => r[schema.primaryKey] == recordId) || {};
+  }
+
+  const fieldsBox = $('#crudFormFields');
+  fieldsBox.innerHTML = schema.columns.map(c => {
+    const val = record[c.key] !== undefined ? record[c.key] : (c.default !== undefined ? c.default : '');
+    if (c.type === 'select_scholarship') {
+      const opts = KNOWN_SCHOLARSHIPS.map(s => `<option value="${esc(s)}" ${s === val ? 'selected' : ''}>${esc(s)}</option>`).join('');
+      return `
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">${esc(c.label)} ${c.required ? '*' : ''}</label>
+          <input type="text" name="${c.key}" list="schListDatalist" value="${esc(val)}" ${c.required ? 'required' : ''} placeholder="Select or type scholarship name" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600">
+          <datalist id="schListDatalist">${opts}</datalist>
+        </div>
+      `;
+    }
+    if (c.type === 'select') {
+      const opts = c.options.map(opt => {
+        const oVal = typeof opt === 'object' ? opt.val : opt;
+        const oLbl = typeof opt === 'object' ? opt.label : opt;
+        return `<option value="${esc(oVal)}" ${String(oVal) === String(val) ? 'selected' : ''}>${esc(oLbl)}</option>`;
+      }).join('');
+      return `
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">${esc(c.label)} ${c.required ? '*' : ''}</label>
+          <select name="${c.key}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600">${opts}</select>
+        </div>
+      `;
+    }
+    if (c.type === 'textarea') {
+      return `
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">${esc(c.label)} ${c.required ? '*' : ''}</label>
+          <textarea name="${c.key}" rows="3" ${c.required ? 'required' : ''} class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600">${esc(val)}</textarea>
+        </div>
+      `;
+    }
+    return `
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">${esc(c.label)} ${c.required ? '*' : ''}</label>
+        <input type="${c.type}" name="${c.key}" value="${esc(val)}" ${c.required ? 'required' : ''} class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600">
+      </div>
+    `;
+  }).join('');
+
+  $('#crudModal').style.display = 'flex';
+}
+
+function closeCrudModal() {
+  $('#crudModal').style.display = 'none';
+}
+
+async function handleCrudSubmit(e) {
+  e.preventDefault();
+  const schema = TABLE_SCHEMAS[CURRENT_DATA_TABLE];
+  if (!schema) return;
+
+  const form = e.target;
+  const formData = new FormData(form);
+  const payload = {};
+  for (const [k, v] of formData.entries()) {
+    payload[k] = v.trim();
+  }
+
+  const recordId = $('#crudRecordId').value;
+  try {
+    if (recordId) {
+      await adminApi(`/api/admin/crud/${CURRENT_DATA_TABLE}/${recordId}`, 'PUT', payload);
+      toast('Record updated successfully');
+    } else {
+      await adminApi(`/api/admin/crud/${CURRENT_DATA_TABLE}`, 'POST', payload);
+      toast('Record created successfully');
+    }
+    closeCrudModal();
+    await loadActiveDataTable();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function deleteDataRecord(id, label) {
+  if (!confirm(`Are you sure you want to delete this record (${label || id})?`)) return;
+  try {
+    await adminApi(`/api/admin/crud/${CURRENT_DATA_TABLE}/${id}`, 'DELETE');
+    toast('Record deleted');
+    await loadActiveDataTable();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function openImportModal() {
+  const schema = TABLE_SCHEMAS[CURRENT_DATA_TABLE];
+  if (!schema) return;
+  $('#importModalTableBadge').textContent = `Target Table: ${schema.label} (${CURRENT_DATA_TABLE})`;
+  $('#importTemplateNotice').innerHTML = `Template file: <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700">nimbus-samples/admin_imports/${CURRENT_DATA_TABLE}.csv</code>`;
+  $('#importFileInput').value = '';
+  $('#importPreviewContainer').style.display = 'none';
+  $('#importErrorsList').style.display = 'none';
+  $('#importModal').style.display = 'flex';
+}
+
+function closeImportModal() {
+  $('#importModal').style.display = 'none';
+}
+
+async function previewImportFile() {
+  const fl = $('#importFileInput');
+  if (!fl.files.length) {
+    alert('Please select a CSV or XLSX file');
+    return;
+  }
+  const file = fl.files[0];
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    const res = await fetch(`/admin/import/${CURRENT_DATA_TABLE}?commit=false`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
+      body: fd
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Import preview failed');
+
+    $('#importPreviewContainer').style.display = 'block';
+    $('#importStatTotal').textContent = `Total Rows: ${data.total_rows}`;
+    $('#importStatValid').textContent = `Valid Rows: ${data.valid_count}`;
+    $('#importStatErrors').textContent = `Errors: ${data.error_count}`;
+
+    const errBox = $('#importErrorsList');
+    if (data.error_count > 0) {
+      errBox.style.display = 'block';
+      errBox.innerHTML = `<b>Validation Issues (${data.error_count}):</b>` + data.errors.map(e => `
+        <div>• Row ${e.row_number}: ${esc(e.error)}</div>
+      `).join('');
+    } else {
+      errBox.style.display = 'none';
+    }
+
+    const sample = data.sample || [];
+    if (sample.length) {
+      const keys = Object.keys(sample[0]);
+      $('#importSampleHead').innerHTML = `<tr>${keys.map(k => `<th class="py-2 px-3">${esc(k)}</th>`).join('')}</tr>`;
+      $('#importSampleBody').innerHTML = sample.map(row => `
+        <tr>${keys.map(k => `<td class="py-1.5 px-3 whitespace-nowrap">${esc(row[k])}</td>`).join('')}</tr>
+      `).join('');
+    } else {
+      $('#importSampleHead').innerHTML = '';
+      $('#importSampleBody').innerHTML = '<tr><td class="py-3 px-4 text-slate-400">No valid preview rows found</td></tr>';
+    }
+
+    const commitBtn = $('#importCommitBtn');
+    if (data.valid_count > 0) {
+      commitBtn.disabled = false;
+      commitBtn.className = 'px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer';
+      commitBtn.textContent = `Commit & Save (${data.valid_count}) Records`;
+    } else {
+      commitBtn.disabled = true;
+      commitBtn.className = 'px-5 py-2 rounded-xl bg-slate-200 text-slate-400 font-semibold text-xs cursor-not-allowed';
+      commitBtn.textContent = 'No Valid Records to Commit';
+    }
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function commitImportFile() {
+  const fl = $('#importFileInput');
+  if (!fl.files.length) return;
+  const file = fl.files[0];
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    const res = await fetch(`/admin/import/${CURRENT_DATA_TABLE}?commit=true`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
+      body: fd
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Commit failed');
+
+    toast(`Successfully imported ${data.saved_count} records into ${CURRENT_DATA_TABLE}!`);
+    closeImportModal();
+    await loadActiveDataTable();
+  } catch (err) {
+    alert(err.message);
   }
 }
 

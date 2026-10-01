@@ -249,6 +249,10 @@
           <span class="material-symbols-outlined text-[20px] text-slate-400">calendar_clock</span>
           Timeline
         </button>
+        <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('offices')" id="navOffices">
+          <span class="material-symbols-outlined text-[20px] text-slate-400">corporate_fare</span>
+          Offices
+        </button>
         <button class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 w-full text-left transition-colors" onclick="switchView('alerts')" id="navAlerts">
           <span class="material-symbols-outlined text-[20px] text-slate-400">notifications</span>
           Alerts
@@ -283,6 +287,15 @@
 
       <!-- 1. HOME SCREEN -->
       <section id="screenHome" class="screen active space-y-6">
+        <!-- Live Deadline Banner from Admin Settings -->
+        <div id="deadlineBannerBox" class="bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-blue-500/10 border border-amber-300/70 rounded-2xl p-4 flex items-center justify-between gap-3 text-amber-950 shadow-xs">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-amber-600 text-[22px]">campaign</span>
+            <span id="deadlineBannerText" class="text-sm font-semibold">Loading university announcement banner...</span>
+          </div>
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 shrink-0">Official Alert</span>
+        </div>
+
         <!-- Hero Progress Card -->
         <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
           <div class="flex items-center gap-5">
@@ -304,6 +317,20 @@
           </div>
         </div>
 
+        <!-- Official Announcements Card -->
+        <div id="homeAnnouncementsCard" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-[20px]">notifications_active</span>
+              <h3 class="font-display font-bold text-base text-slate-900">University Announcements</h3>
+            </div>
+            <span id="announcementsCountBadge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">0 Active</span>
+          </div>
+          <div id="announcementsList" class="space-y-2.5">
+            <p class="text-xs text-slate-400">Loading campus announcements...</p>
+          </div>
+        </div>
+
         <!-- Scholarship Program Selection Card -->
         <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <h3 class="font-display font-bold text-base text-slate-900">Select Scholarship Program</h3>
@@ -311,6 +338,20 @@
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <select id="schSelect" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"></select>
             <button type="button" onclick="chooseScholarship()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition-colors">Select Program</button>
+          </div>
+        </div>
+
+        <!-- Scholarship Details & Benefits Card (Facts) -->
+        <div id="homeFactsCard" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-emerald-600 text-[20px]">workspace_premium</span>
+              <h3 class="font-display font-bold text-base text-slate-900">Scholarship Details &amp; Benefits</h3>
+            </div>
+            <span id="factsScholarshipBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Verified Database Terms</span>
+          </div>
+          <div id="factsList" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <p class="text-xs text-slate-400 col-span-3">Select a scholarship program above to view financial benefits and criteria.</p>
           </div>
         </div>
 
@@ -408,6 +449,19 @@
             <p class="text-xs text-slate-500">Urgent deadline notices and automated document verification alerts.</p>
           </div>
           <div id="alertsList" class="space-y-3"></div>
+        </div>
+      </section>
+
+      <!-- 6. OFFICES DIRECTORY SCREEN -->
+      <section id="screenOffices" class="screen">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+          <div class="mb-4">
+            <h3 class="font-display font-bold text-base text-slate-900">University Administrative Offices</h3>
+            <p class="text-xs text-slate-500">Official contact directories and query routing for campus aid, housing, and academic departments.</p>
+          </div>
+          <div id="officesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <p class="text-xs text-slate-400 col-span-2">Loading campus offices directory...</p>
+          </div>
         </div>
       </section>
 
@@ -523,7 +577,7 @@ function switchView(view) {
     if (icon) icon.className = 'material-symbols-outlined text-[20px] text-blue-600';
   }
 
-  const titles = { home: 'Overview', assistant: 'AI Assistant Copilot', documents: 'Document Verification', timeline: 'Milestone Timeline', alerts: 'Notifications' };
+  const titles = { home: 'Overview', assistant: 'AI Assistant Copilot', documents: 'Document Verification', timeline: 'Milestone Timeline', offices: 'Campus Offices & Directory', alerts: 'Notifications' };
   $('#currentScreenTitle').textContent = titles[view] || 'Workspace';
 }
 
@@ -583,6 +637,12 @@ async function refreshState() {
   $('#homePct').textContent = `${pct}%`;
   $('#homeArc').setAttribute('stroke-dasharray', `${pct} 100`);
 
+  // Update dynamic deadline banner
+  const dlBanner = $('#deadlineBannerText');
+  if (dlBanner) {
+    dlBanner.textContent = STATE.deadline_banner || 'Applications closing soon. Verify all required documents!';
+  }
+
   // Scholarship Dropdown
   const schSelect = $('#schSelect');
   schSelect.innerHTML = (STATE.catalog || []).map(c =>
@@ -602,8 +662,11 @@ async function refreshState() {
     nextStepEl.innerHTML = '<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">All Clear: All required documents uploaded! Go to the Documents tab to submit your application.</span>';
   }
 
+  renderAnnouncements();
+  renderFacts();
   renderDocuments();
   renderTimeline();
+  renderOffices();
   renderAlerts();
 }
 
@@ -714,13 +777,85 @@ function closeAckModal() {
   $('#ackModal').style.display = 'none';
 }
 
+function renderAnnouncements() {
+  const box = $('#announcementsList');
+  const countBadge = $('#announcementsCountBadge');
+  const items = STATE.announcements || [];
+  if (countBadge) countBadge.textContent = `${items.length} Active`;
+
+  if (!items.length) {
+    box.innerHTML = '<p class="text-xs text-slate-400">No active university announcements.</p>';
+    return;
+  }
+
+  box.innerHTML = items.map(a => `
+    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col gap-1">
+      <div class="flex items-center justify-between gap-2">
+        <span class="font-bold text-slate-900 text-sm">${esc(a.title)}</span>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold pill-${a.priority || 'INFORMATIONAL'}">${esc(a.priority)}</span>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">${esc(a.body)}</p>
+    </div>
+  `).join('');
+}
+
+function renderFacts() {
+  const box = $('#factsList');
+  const badge = $('#factsScholarshipBadge');
+  const items = STATE.facts || [];
+
+  if (badge) badge.textContent = STATE.scholarship ? esc(STATE.scholarship) : 'Program Facts';
+
+  if (!STATE.scholarship) {
+    box.innerHTML = '<p class="text-xs text-slate-400 col-span-3">Choose a scholarship above to see fee reduction, stipend, and eligibility criteria.</p>';
+    return;
+  }
+
+  if (!items.length) {
+    box.innerHTML = '<p class="text-xs text-slate-400 col-span-3">No specific benefit facts listed in database for this program.</p>';
+    return;
+  }
+
+  box.innerHTML = items.map(f => `
+    <div class="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/70 flex flex-col justify-between gap-1 shadow-2xs">
+      <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800">${esc(f.label)}</span>
+      <span class="text-sm font-extrabold text-slate-900">${esc(f.value)}</span>
+    </div>
+  `).join('');
+}
+
+function renderOffices() {
+  const box = $('#officesList');
+  const items = STATE.offices || [];
+
+  if (!items.length) {
+    box.innerHTML = '<p class="text-xs text-slate-400 col-span-2">No administrative offices registered in directory.</p>';
+    return;
+  }
+
+  box.innerHTML = items.map(o => `
+    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+      <div class="flex items-center justify-between gap-2">
+        <h4 class="font-bold text-slate-900 text-sm">${esc(o.name)}</h4>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200/60">${esc(o.category)}</span>
+      </div>
+      ${o.description ? `<p class="text-xs text-slate-600">${esc(o.description)}</p>` : ''}
+      <div class="pt-2 border-t border-slate-200/60 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+        ${o.email ? `<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-slate-400">mail</span>${esc(o.email)}</span>` : ''}
+        ${o.phone ? `<span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-slate-400">call</span>${esc(o.phone)}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
 function renderTimeline() {
-  const k = Object.entries(STATE.timeline || {});
-  $('#timelineList').innerHTML = k.map(([key, val], i) => `
+  const items = STATE.timeline_list && STATE.timeline_list.length ? STATE.timeline_list : Object.entries(STATE.timeline || {}).map(([k, v], idx) => ({ event_key: k, title: k.replace('_', ' ').toUpperCase(), date_str: v, order_num: idx }));
+
+  $('#timelineList').innerHTML = items.map((e, i) => `
     <div class="relative pl-6 pb-6">
       <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white ${i === 0 ? 'bg-blue-600 ring-4 ring-blue-100' : 'bg-slate-300'}"></div>
-      <small class="text-xs font-semibold uppercase tracking-wider text-slate-400 block">${esc(key.replace('_', ' '))}</small>
-      <span class="font-display font-bold text-slate-900 text-base">${esc(val)}</span>
+      <small class="text-xs font-semibold uppercase tracking-wider text-slate-400 block">${esc(e.title || e.event_key)}</small>
+      <span class="font-display font-bold text-slate-900 text-base">${esc(e.date_str)}</span>
     </div>
   `).join('');
 }

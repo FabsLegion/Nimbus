@@ -5,11 +5,33 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Header
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from src.database.db import conn, get_timeline
+from src.database.db import (
+    conn,
+    get_catalog,
+    get_timeline,
+    get_timeline_list,
+    get_offices_list,
+    get_scholarship_facts,
+    get_announcements,
+    get_setting,
+    set_setting,
+    add_audit_log,
+    get_audit_logs,
+    get_all_required_documents,
+)
 from src.database.models import Application
 from src.services.assistant import answer, get_student, CATALOG
 from src.services.checklist import checklist, guess, REQS
 from src.services.notifications import sync_student_notifications
+from src.services.data_admin import (
+    parse_import_file,
+    validate_and_preview,
+    commit_import_rows,
+    list_table_rows,
+    create_table_row,
+    update_table_row,
+    delete_table_row,
+)
 from src.services.llm import LOG
 from src.services.auth import (
     register_student,
@@ -197,15 +219,27 @@ def state(sid: str, scholarship: Optional[str] = None):
     app_row = conn().execute("SELECT * FROM applications WHERE student_id=? ORDER BY id DESC LIMIT 1", (sid,)).fetchone()
     submitted_app = dict(app_row) if app_row else None
 
+    reqs_map = get_all_required_documents()
+    facts = get_scholarship_facts(sch) if sch else []
+    announcements = get_announcements(active_only=True)
+    deadline_banner = get_setting("deadline_banner", default="Applications close Tonight, 11:59 PM. Verify all required documents!")
+    offices = get_offices_list()
+    timeline_list = get_timeline_list()
+
     return {
         "student": s,
         "scholarship": sch,
-        "catalog": CATALOG,
+        "catalog": list(CATALOG),
         "timeline": T(),
+        "timeline_list": timeline_list,
         "notifications": notes,
-        "required": REQS.get(sch, []),
-        "checklist": checklist(sid, sch) if sch in REQS else [],
+        "required": reqs_map.get(sch, []),
+        "checklist": checklist(sid, sch) if sch in reqs_map else [],
         "application": submitted_app,
+        "facts": facts,
+        "announcements": announcements,
+        "deadline_banner": deadline_banner,
+        "offices": offices,
     }
 
 @app.post("/api/scholarship/choose")
@@ -360,3 +394,101 @@ def kb_delete(draft_id: int, request: Request):
     require_admin(request)
     res = delete_draft(draft_id)
     return res
+
+# --- Admin Data Management & Bulk Import Endpoints (Token Protected) ---
+
+class SettingPayload(BaseModel):
+    text: str
+
+@app.get("/api/admin/crud/{table}")
+def admin_list_table(table: str, request: Request):
+    require_admin(request)
+    try:
+        return list_table_rows(table)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/admin/crud/{table}")
+def admin_create_row(table: str, data: dict, request: Request):
+    require_admin(request)
+    try:
+        return create_table_row(table, data, who="admin")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Creation failed: {str(e)}")
+
+@app.put("/api/admin/crud/{table}/{row_id}")
+def admin_update_row(table: str, row_id: int, data: dict, request: Request):
+    require_admin(request)
+    try:
+        return update_table_row(table, row_id, data, who="admin")
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Update failed: {str(e)}")
+
+@app.delete("/api/admin/crud/{table}/{row_id}")
+def admin_delete_row(table: str, row_id: int, request: Request):
+    require_admin(request)
+    try:
+        success = delete_table_row(table, row_id, who="admin")
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Row {row_id} not found in {table}")
+        return {"status": "ok", "deleted_id": row_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/admin/settings/deadline-banner")
+def admin_get_deadline_banner(request: Request):
+    require_admin(request)
+    return {"text": get_setting("deadline_banner", "Applications close Tonight, 11:59 PM. Verify all required documents!")}
+
+@app.post("/api/admin/settings/deadline-banner")
+def admin_set_deadline_banner(payload: SettingPayload, request: Request):
+    require_admin(request)
+    set_setting("deadline_banner", payload.text)
+    add_audit_log("admin", f"Updated deadline banner to: '{payload.text}'")
+    return {"status": "ok", "text": payload.text}
+
+@app.get("/api/admin/audit-logs")
+def admin_get_audit_logs_endpoint(request: Request, limit: int = 100):
+    require_admin(request)
+    return get_audit_logs(limit=limit)
+
+@app.post("/admin/import/{table}")
+@app.post("/api/admin/import/{table}")
+async def admin_import_file(table: str, request: Request, file: UploadFile = File(...), commit: bool = False):
+    require_admin(request)
+    content = await file.read()
+    filename = file.filename or "import_data.csv"
+    try:
+        raw_rows = parse_import_file(content, filename)
+        preview_res = validate_and_preview(table, raw_rows)
+        if not commit:
+            return {
+                "status": "preview",
+                "table": table,
+                "filename": filename,
+                "total_rows": preview_res["total_rows"],
+                "valid_count": preview_res["valid_count"],
+                "error_count": preview_res["error_count"],
+                "errors": preview_res["errors"],
+                "sample": preview_res["preview_sample"],
+            }
+        else:
+            if not preview_res["valid_rows"]:
+                raise HTTPException(status_code=400, detail="No valid rows to commit. Please check file errors.")
+            saved_count = commit_import_rows(table, preview_res["valid_rows"], who="admin")
+            return {
+                "status": "committed",
+                "table": table,
+                "filename": filename,
+                "saved_count": saved_count,
+                "error_count": preview_res["error_count"],
+                "errors": preview_res["errors"],
+            }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to process import: {str(e)}")

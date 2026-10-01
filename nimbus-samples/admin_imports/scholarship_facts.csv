@@ -1,0 +1,11 @@
+scholarship_id,label,value,sort_order
+Merit Scholarship - Undergraduate,Fee Reduction,80% Tuition Fee Waiver,1
+Merit Scholarship - Undergraduate,Monthly Stipend,Rs 5,000 / month,2
+Merit Scholarship - Undergraduate,Eligibility Criteria,CGPA >= 8.5 with no active backlogs,3
+Merit Scholarship - Special Category,Fee Reduction,100% Tuition Fee Waiver,1
+Merit Scholarship - Special Category,Monthly Stipend,Rs 6,000 / month,2
+Need-Based Financial Assistance Scholarship,Fee Reduction,50% Tuition Fee Waiver,1
+Need-Based Financial Assistance Scholarship,Stipend Amount,Rs 50,000 annual grant,2
+Need-Based Financial Assistance Scholarship,Income Ceiling,Under Rs 4,00,000 per annum,3
+International Exchange Fellowship,Travel Grant,Up to Rs 1,50,000 airfare coverage,1
+International Exchange Fellowship,Living Allowance,USD 800 / month abroad,2

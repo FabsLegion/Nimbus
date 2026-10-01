@@ -131,3 +131,28 @@ class KnowledgeDraft(SQLModel, table=True):
     status: str = "draft"
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"))
 
+class ScholarshipFact(SQLModel, table=True):
+    __tablename__ = "scholarship_facts"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    scholarship_id: str = Field(index=True)  # scholarship name or identifier
+    label: str
+    value: str
+    sort_order: int = Field(default=0)
+
+class Announcement(SQLModel, table=True):
+    __tablename__ = "announcements"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    body: str
+    priority: str = Field(default="INFORMATIONAL")
+    active: int = Field(default=1)
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
+
+class AuditLog(SQLModel, table=True):
+    __tablename__ = "audit_log"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    who: str = Field(default="admin")
+    what: str
+    when_ts: str = Field(default_factory=lambda: datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
+
+

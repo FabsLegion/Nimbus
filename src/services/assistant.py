@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timezone
-from src.database.db import conn, get_catalog, get_timeline
+from src.database.db import conn, get_catalog, get_timeline, get_scholarship_facts
 from src.rag.retrieve import retrieve
 from src.services.checklist import checklist
 from src.services.llm import ask_llm
@@ -106,20 +106,23 @@ def detect_conflict(query, current, older, scholarship=None):
 
     # Check for same year/version contradiction on the same requirement
     opposing_pairs = [
+        ("is not accepted", "is accepted"),
         ("not accepted", "accepted"),
-        ("previous-year", "current-year"),
         ("mandatory", "optional"),
         ("exempt", "required"),
     ]
     if len(current) >= 2:
+        q_lower = query.lower()
         for i in range(len(current)):
             for j in range(i + 1, len(current)):
                 c1, c2 = current[i], current[j]
                 if c1.get("year") == c2.get("year") and c1.get("version") == c2.get("version"):
                     t1, t2 = c1["text"].lower(), c2["text"].lower()
-                    for pos, neg in opposing_pairs:
-                        if (pos in t1 and neg in t2 and pos not in t2) or (pos in t2 and neg in t1 and pos not in t1):
-                            return None, True
+                    shared = any(w in t1 and w in t2 for w in q_lower.split() if len(w) > 3)
+                    if shared:
+                        for neg, pos in opposing_pairs:
+                            if (neg in t1 and pos in t2 and neg not in t2) or (neg in t2 and pos in t1 and neg not in t1):
+                                return None, True
 
     if not older:
         return None, False
@@ -292,10 +295,18 @@ def answer(student_id, message, chosen=None, lang_override=None, session_id=None
 
     s = get_student(student_id)
     language = lang_override or s.get("language") or "English"
-    cat = classify(message)
     scholarship = chosen or s.get("scholarship", "")
+    facts = get_scholarship_facts(scholarship) if scholarship else []
 
-    if cat in OFFICE and cat != "SCHOLARSHIP":          # not answerable from scholarship rules
+    # Check if question is inquiring about scholarship facts / benefits
+    is_scholarship_fact_query = any(
+        phrase in message.lower() for phrase in ["fee reduction", "fee waiver", "fee concession", "tuition fee waiver", "stipend", "eligibility", "allowance"]
+    ) or any(
+        f["label"].lower() in message.lower() for f in facts
+    )
+
+    cat = classify(message)
+    if not is_scholarship_fact_query and cat in OFFICE and cat != "SCHOLARSHIP":          # not answerable from scholarship rules
         office = OFFICE[cat]
         log(student_id, cat, message, 0, office)
         msg_text = (f"This looks like a {cat.lower()} issue, which is handled directly by the {office}.\n\n"
@@ -324,8 +335,18 @@ def answer(student_id, message, chosen=None, lang_override=None, session_id=None
         record_chat_message(student_id, "assistant", res["answer"], session_id=session_id)
         return res
 
+    facts = get_scholarship_facts(scholarship) if scholarship else []
+    facts_str = "; ".join(f"{f['label']}: {f['value']}" for f in facts) if facts else "None"
+
+    # Check if question is asking about known scholarship facts (fee reduction, stipend, eligibility, etc.)
+    fact_keywords = ["fee", "reduction", "waiver", "concession", "stipend", "amount", "eligibility", "criteria", "grant", "allowance"]
+    fact_match = (
+        any(kw in message.lower() for kw in fact_keywords)
+        or any(f["label"].lower() in message.lower() for f in facts)
+    )
+
     current, older, best_dist = retrieve(message, scholarship)
-    if not current or best_dist > SCOPE_THRESHOLD:
+    if (not current or best_dist > SCOPE_THRESHOLD) and not (facts and fact_match):
         office = "Financial Aid / Scholarship Office"
         log(student_id, "OUT_OF_SCOPE", message, 0, office)
         history_context = "\n".join(f"{h['role'].title()}: {h['content']}" for h in history[-6:])
@@ -372,24 +393,30 @@ Please provide a helpful, concise answer (max 3 sentences) in {language}. Note t
     context = (f"STUDENT: {s['name']}, {s['branch']}\n"
                f"LANGUAGE: {language}\n"
                f"SCHOLARSHIP: {scholarship}\n"
+               f"DATABASE FACTS: {facts_str}\n"
                f"TIMELINE: {timeline_str}\n"
                f"RECENT CONVERSATION:\n{history_str}\n"
                f"CURRENT RULES: {[h['text'] for h in current]}\n"
                f"SUPERSEDED RULES: {[h['text'] for h in older] if older else 'None'}\n"
                f"CHECKLIST STATUS: {items}\n"
                f"QUESTION: {message}\n"
-               f"Remember: Max 3 plain sentences in {language}. No file names. No step list.")
+               f"Remember: Max 3 plain sentences in {language}. No file names. No step list. Prioritize DATABASE FACTS for fee reduction, stipend, or eligibility amounts.")
 
     try:
         text = ask_llm(SYSTEM, context).strip()
     except Exception:
         text = f"Here is the guidance for your {scholarship}. Please review your checklist status and submit all documents before {T['deadline']}."
 
+    if problems and not (text.endswith("What to do next:") or "What to do next" in text):
+        text = f"{text}\n\nWhat to do next: {steps[0] if steps else 'Review your checklist in the Documents tab.'}"
+
     if problems:
         notify(student_id, "URGENT", f"{problems[0][0]} needs attention. Deadline: {T['deadline']}")
     log(student_id, cat, message, 1)
 
     sources = list({h["source"] for h in current + older})
+    if fact_match and facts and "scholarship_facts" not in sources:
+        sources.append("scholarship_facts")
     status = "action_required" if problems else "all_clear"
     res = reply(text, status, sources=sources, items=items, conflict=conflict, steps=steps)
     record_chat_message(student_id, "assistant", res["answer"], session_id=session_id)
