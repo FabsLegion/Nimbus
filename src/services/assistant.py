@@ -39,7 +39,10 @@ Max 3 sentences. No file names. No step list. The interface shows steps, sources
 Explain clearly and concisely in the requested language. Use only the provided facts."""
 
 def get_student(sid):
-    return dict(conn().execute("SELECT * FROM students WHERE student_id=?", (sid,)).fetchone())
+    row = conn().execute("SELECT * FROM students WHERE student_id=?", (sid,)).fetchone()
+    if row:
+        return dict(row)
+    return {"student_id": sid, "name": "Student", "branch": "General", "year": "1st Year", "language": "English", "scholarship": ""}
 
 def log(sid, cat, text, resolved, office=""):
     c = conn()
@@ -124,8 +127,17 @@ def detect_conflict(query, current, older, scholarship=None):
     # Generic version conflict check (older vs current)
     from src.services.checklist import REQS
     doc_keys = [k.lower() for k in REQS.get(scholarship or "", [])]
-    generic_keys = ["income", "identity", "marksheet", "bank", "category", "caste", "certificate", "fee", "deadline", "verification"]
-    all_keys = list(dict.fromkeys(doc_keys + generic_keys))
+    generic_keys = [
+        "income", "identity", "marksheet", "bank", "category", "caste", "certificate",
+        "fee", "tuition", "surcharge", "curfew", "deposit", "rebate", "attendance",
+        "borrowing", "subsidy", "stipend", "ceiling", "commences", "semester",
+        "registration", "deadline", "verification"
+    ]
+    query_tokens = [
+        w.strip(",.?!:;\"'()") for w in query.lower().split()
+        if len(w) >= 4 and w not in {"what", "when", "where", "which", "about", "have", "with", "from", "that", "this", "your", "does", "rule", "rules"}
+    ]
+    all_keys = list(dict.fromkeys(query_tokens + doc_keys + generic_keys))
 
     text_corpus = (query + " " + " ".join(h["text"] for h in current)).lower()
 
@@ -174,6 +186,105 @@ def build_steps(problems, deadline, query=""):
         steps.append(f"Submit your application before the deadline: {deadline}.")
     return steps
 
+def is_portal_error(message: str) -> bool:
+    """Detect if the student pasted a portal error code or error description."""
+    msg = message.lower().strip()
+    error_patterns = [
+        "document_invalid", "doc_invalid", "document invalid", "invalid document",
+        "document_missing", "doc_missing", "document missing", "missing document",
+        "wrong_category", "category mismatch", "category_mismatch",
+        "portal error", "verification failed", "verification error",
+        "upload rejected", "document rejected", "rejected document",
+        "upload_failed"
+    ]
+    if any(p in msg for p in error_patterns):
+        return True
+    upper_tokens = [t.strip(",.:;!?") for t in message.split() if t.isupper() and len(t) >= 4]
+    if any("INVALID" in t or "MISSING" in t or "ERROR" in t or "REJECT" in t for t in upper_tokens):
+        return True
+    return False
+
+def explain_portal_error(student_id: str, scholarship: str, message: str, language: str = "English") -> dict:
+    """Explain portal errors in plain language using the student's actual checklist."""
+    deadline = T.get("deadline", "the application deadline")
+    
+    if not scholarship:
+        ans = (
+            f"The portal error '{message.strip()}' indicates that a required submission document was rejected or not found.\n\n"
+            "Likely reason: A document upload failed verification checks or has not been uploaded yet.\n\n"
+            "What is required: You must complete the document checklist for your scholarship program.\n\n"
+            "What to do next: Select your scholarship program on the Home tab so I can inspect your specific requirements and checklist."
+        )
+        return reply(ans, "clarify", options=CATALOG, next_action="Select Scholarship")
+
+    items = checklist(student_id, scholarship)
+    problems = [i for i in items if i[1] != "OK"]
+    msg_lower = message.lower()
+    
+    # Priority matching by document name mentioned in message
+    matched_problem = None
+    for p in problems:
+        if p[0].lower() in msg_lower:
+            matched_problem = p
+            break
+            
+    # Priority matching by error status
+    if not matched_problem:
+        if "invalid" in msg_lower or "reject" in msg_lower:
+            matched_problem = next((p for p in problems if p[1] == "INVALID"), None)
+        elif "missing" in msg_lower:
+            matched_problem = next((p for p in problems if p[1] == "MISSING"), None)
+        elif "category" in msg_lower:
+            matched_problem = next((p for p in problems if p[1] == "WRONG_CATEGORY"), None)
+
+    # Fallback to any active problem
+    if not matched_problem and problems:
+        matched_problem = problems[0]
+
+    if matched_problem:
+        doc_name, status, why = matched_problem
+        if status == "MISSING":
+            likely_reason = f"Your {doc_name} has not been uploaded to the university portal yet."
+        elif status == "INVALID":
+            likely_reason = f"Your {doc_name} was marked invalid" + (f": {why}." if why else " due to verification criteria such as an illegible scan, expired issue date, or missing official seal.")
+        elif status == "WRONG_CATEGORY":
+            likely_reason = f"Your {doc_name} was uploaded under an incorrect category: {why}."
+        else:
+            likely_reason = f"Your {doc_name} has a portal status of {status}: {why}."
+
+        what_is_required = f"For {scholarship}, a valid, officially verified {doc_name} is mandatory for eligibility."
+        steps = build_steps(problems, deadline, message)
+
+        ans = (
+            f"Portal Error Explanation for \"{message.strip()}\":\n\n"
+            f"Likely reason: {likely_reason}\n\n"
+            f"What is required: {what_is_required}\n\n"
+            f"What to do next: Go to the Documents tab in your Student Workspace, upload a clear copy of your {doc_name}, and verify it shows 'OK' before {deadline}."
+        )
+        if language and language.lower() != "english":
+            try:
+                ans = ask_llm(
+                    f"Translate the university error explanation into {language}. Ensure it ends with 'What to do next:'.",
+                    ans
+                ).strip()
+            except Exception:
+                pass
+                
+        notify(student_id, "URGENT", f"Portal Error: {doc_name} needs attention ({status}).")
+        log(student_id, "PORTAL_ERROR", message, 1)
+        return reply(ans, "action_required", items=items, steps=steps, next_action=f"Upload {doc_name}")
+    else:
+        ans = (
+            f"Portal Error Explanation for \"{message.strip()}\":\n\n"
+            f"Likely reason: All your mandatory checklist documents for {scholarship} are currently verified as 'OK'. "
+            "This error may be a temporary portal caching issue or related to an unsubmitted application form.\n\n"
+            f"What is required: All requirements are met on your checklist.\n\n"
+            f"What to do next: Verify all checklist items on your Documents tab, proceed to lock and submit your application before {deadline}, or contact the Scholarship Office if the error persists."
+        )
+        steps = ["Confirm all documents show 'OK'.", f"Submit application before {deadline}."]
+        log(student_id, "PORTAL_ERROR", message, 1)
+        return reply(ans, "all_clear", items=items, steps=steps, next_action="Review Documents")
+
 def answer(student_id, message, chosen=None, lang_override=None, session_id=None):
     # 1. Record incoming user message in chat_messages table
     record_chat_message(student_id, "user", message, session_id=session_id)
@@ -184,7 +295,7 @@ def answer(student_id, message, chosen=None, lang_override=None, session_id=None
     cat = classify(message)
     scholarship = chosen or s.get("scholarship", "")
 
-    if cat in OFFICE:                                   # not answerable from scholarship rules
+    if cat in OFFICE and cat != "SCHOLARSHIP":          # not answerable from scholarship rules
         office = OFFICE[cat]
         log(student_id, cat, message, 0, office)
         msg_text = (f"This looks like a {cat.lower()} issue, which is handled directly by the {office}.\n\n"
@@ -198,6 +309,12 @@ def answer(student_id, message, chosen=None, lang_override=None, session_id=None
             except Exception:
                 pass
         res = reply(msg_text, "escalated", next_action=f"Contact {office}", office=office)
+        record_chat_message(student_id, "assistant", res["answer"], session_id=session_id)
+        return res
+
+    # 2. Portal error explainer: when a student pastes a portal error code
+    if is_portal_error(message):
+        res = explain_portal_error(student_id, scholarship, message, language=language)
         record_chat_message(student_id, "assistant", res["answer"], session_id=session_id)
         return res
 

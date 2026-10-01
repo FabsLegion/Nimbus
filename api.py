@@ -9,6 +9,7 @@ from src.database.db import conn, get_timeline
 from src.database.models import Application
 from src.services.assistant import answer, get_student, CATALOG
 from src.services.checklist import checklist, guess, REQS
+from src.services.notifications import sync_student_notifications
 from src.services.llm import LOG
 from src.services.auth import (
     register_student,
@@ -182,6 +183,13 @@ def student_state_authenticated(request: Request, scholarship: Optional[str] = N
 def state(sid: str, scholarship: Optional[str] = None):
     s = get_student(sid)
     sch = scholarship or s.get("scholarship", "")
+    
+    # Sync 4-priority notifications from checklist and timeline
+    try:
+        sync_student_notifications(sid)
+    except Exception:
+        pass
+
     notes = [dict(r) for r in conn().execute(
         "SELECT priority,message,ts FROM notifications WHERE student_id=? ORDER BY id DESC", (sid,))]
     

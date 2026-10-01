@@ -49,6 +49,72 @@
 <!-- Toast Notification -->
 <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-xl font-medium text-sm shadow-xl z-50 transition-all duration-300 pointer-events-none" style="display:none"></div>
 
+<!-- Submission Acknowledgement Modal -->
+<div id="ackModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300" style="display:none">
+  <div class="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl border border-slate-100 transform transition-all space-y-6">
+    <div class="text-center space-y-3">
+      <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+        <span class="material-symbols-outlined text-[36px]">verified</span>
+      </div>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+        Application Formally Locked &amp; Submitted
+      </span>
+      <h3 class="text-2xl font-extrabold text-slate-900 font-display">Submission Acknowledgement</h3>
+      <p class="text-sm text-slate-600">Your scholarship application dossier has been recorded in the university review ledger.</p>
+    </div>
+
+    <!-- Application Details Card -->
+    <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-3">
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-semibold uppercase tracking-wider">Application Ref</span>
+        <span id="ackAppId" class="font-mono font-bold text-slate-800">APP-2026</span>
+      </div>
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-semibold uppercase tracking-wider">Scholarship</span>
+        <span id="ackSchName" class="font-bold text-blue-600">Merit Scholarship</span>
+      </div>
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-500 font-semibold uppercase tracking-wider">Submitted At</span>
+        <span id="ackSubmittedAt" class="font-medium text-slate-700">Just now</span>
+      </div>
+    </div>
+
+    <!-- Next Timeline Milestones -->
+    <div class="space-y-3">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Important Timeline Dates</h4>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/70">
+          <div class="flex items-center gap-1.5 text-blue-700 text-xs font-semibold mb-1">
+            <span class="material-symbols-outlined text-[16px]">fact_check</span>
+            Verification Phase
+          </div>
+          <div id="ackVerifDates" class="font-bold text-slate-900 text-sm">03 Oct to 07 Oct</div>
+          <p class="text-[11px] text-slate-500 mt-0.5">Aid committee audits certificates</p>
+        </div>
+        <div class="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200/70">
+          <div class="flex items-center gap-1.5 text-indigo-700 text-xs font-semibold mb-1">
+            <span class="material-symbols-outlined text-[16px]">celebration</span>
+            Results Announcement
+          </div>
+          <div id="ackResultsDate" class="font-bold text-slate-900 text-sm">10 Oct</div>
+          <p class="text-[11px] text-slate-500 mt-0.5">Merit list &amp; award letters</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next Actions -->
+    <div class="text-xs text-slate-500 leading-relaxed bg-amber-50/60 border border-amber-200/60 rounded-xl p-3 flex items-start gap-2.5">
+      <span class="material-symbols-outlined text-amber-600 text-[18px] shrink-0 mt-0.5">lightbulb</span>
+      <span>Keep your original certificates accessible in case the scrutiny committee requests physical verification or further clarifications.</span>
+    </div>
+
+    <button type="button" onclick="closeAckModal()" class="w-full py-3 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm shadow-md transition-all">
+      Continue to Workspace
+    </button>
+  </div>
+</div>
+
 <!-- ================= STAGE 1: AUTHENTICATION ================= -->
 <div id="authStage" class="flex-1 flex items-center justify-center p-6">
   <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
@@ -574,13 +640,19 @@ function renderDocuments() {
   const submitBox = $('#submitContainer');
   if (STATE.application) {
     submitBox.innerHTML = `
-      <div class="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+      <div class="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-3">
         <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-sm">
           <span class="material-symbols-outlined text-[20px]">check</span>
         </div>
         <h4 class="font-display font-bold text-lg text-emerald-900">Application Formally Submitted</h4>
         <p class="text-xs text-emerald-700 max-w-md mx-auto">Your application for <b>${esc(STATE.scholarship)}</b> is locked and safely recorded in the university review ledger.</p>
         <div class="pt-2 text-xs text-emerald-800 font-medium">Verification: <b>${esc(STATE.timeline.verification || '03 Oct to 07 Oct')}</b> • Results: <b>${esc(STATE.timeline.results || '10 Oct')}</b></div>
+        <div class="pt-2">
+          <button type="button" onclick="showAckModal(STATE.application)" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100 text-xs font-semibold shadow-2xs transition-all">
+            <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+            View Formal Acknowledgement
+          </button>
+        </div>
       </div>
     `;
   } else {
@@ -622,9 +694,24 @@ async function handleSubmitApplication() {
     const res = await api('/api/application/submit', 'POST', {});
     toast('Application submitted successfully!');
     await refreshState();
+    showAckModal(res);
   } catch (err) {
     alert(err.message);
   }
+}
+
+function showAckModal(data) {
+  const d = data || {};
+  $('#ackAppId').textContent = d.application_id || ('APP-' + (STATE.student ? STATE.student.student_id : '2026'));
+  $('#ackSchName').textContent = d.scholarship || STATE.scholarship;
+  $('#ackSubmittedAt').textContent = d.submitted_at || new Date().toLocaleString();
+  $('#ackVerifDates').textContent = d.verification_dates || (STATE.timeline && STATE.timeline.verification) || '03 Oct to 07 Oct';
+  $('#ackResultsDate').textContent = d.results_date || (STATE.timeline && STATE.timeline.results) || '10 Oct';
+  $('#ackModal').style.display = 'flex';
+}
+
+function closeAckModal() {
+  $('#ackModal').style.display = 'none';
 }
 
 function renderTimeline() {
@@ -640,15 +727,51 @@ function renderTimeline() {
 
 function renderAlerts() {
   const alerts = STATE.notifications || [];
-  $('#alertsList').innerHTML = alerts.length ? alerts.map(n => `
-    <div class="p-4 rounded-xl border ${n.priority === 'URGENT' ? 'bg-rose-50/70 border-rose-200 text-rose-900' : 'bg-amber-50/70 border-amber-200 text-amber-900'} flex items-start justify-between gap-3">
-      <div>
-        <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${n.priority === 'URGENT' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}">${esc(n.priority)}</span>
-        <div class="text-sm font-medium mt-1">${esc(n.message)}</div>
+  const priorityConfig = {
+    'URGENT': {
+      box: 'bg-rose-50/80 border-rose-200 text-rose-950',
+      badge: 'bg-rose-100 text-rose-700 border-rose-300',
+      icon: 'error',
+      iconColor: 'text-rose-600'
+    },
+    'DEADLINE': {
+      box: 'bg-amber-50/80 border-amber-200 text-amber-950',
+      badge: 'bg-amber-100 text-amber-800 border-amber-300',
+      icon: 'alarm',
+      iconColor: 'text-amber-600'
+    },
+    'ACTION REQUIRED': {
+      box: 'bg-purple-50/80 border-purple-200 text-purple-950',
+      badge: 'bg-purple-100 text-purple-700 border-purple-300',
+      icon: 'assignment_late',
+      iconColor: 'text-purple-600'
+    },
+    'INFORMATIONAL': {
+      box: 'bg-blue-50/80 border-blue-200 text-blue-950',
+      badge: 'bg-blue-100 text-blue-700 border-blue-300',
+      icon: 'info',
+      iconColor: 'text-blue-600'
+    }
+  };
+
+  $('#alertsList').innerHTML = alerts.length ? alerts.map(n => {
+    const prio = (n.priority || 'INFORMATIONAL').toUpperCase().trim();
+    const cfg = priorityConfig[prio] || priorityConfig['INFORMATIONAL'];
+    return `
+      <div class="p-4 rounded-xl border ${cfg.box} flex items-start justify-between gap-3 shadow-2xs transition-all">
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-[20px] ${cfg.iconColor} shrink-0 mt-0.5">${cfg.icon}</span>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${cfg.badge}">${esc(n.priority)}</span>
+            </div>
+            <div class="text-sm font-medium mt-1.5 leading-snug">${esc(n.message)}</div>
+          </div>
+        </div>
+        <span class="text-xs text-slate-400 shrink-0 whitespace-nowrap">${esc(n.ts || '')}</span>
       </div>
-      <span class="text-xs text-slate-400 shrink-0">${esc(n.ts || '')}</span>
-    </div>
-  `).join('') : '<p class="text-xs text-slate-400">No active alerts. You are in good standing.</p>';
+    `;
+  }).join('') : '<p class="text-xs text-slate-400">No active alerts. You are in good standing.</p>';
 }
 
 // Assistant chat handling
