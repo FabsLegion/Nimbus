@@ -122,6 +122,7 @@ class KnowledgeDraft(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     file_name: str
     scholarship_name: str
+    kind: str = Field(default="scholarship")  # scholarship, fee, hostel, calendar, faq, notice
     year: int = 2026
     version: int = 1
     required_documents_json: str = "[]"

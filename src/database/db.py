@@ -64,6 +64,29 @@ def init():
             c.execute("ALTER TABLE students ADD COLUMN category TEXT DEFAULT 'General'")
         if "pin_hash" not in cols:
             c.execute("ALTER TABLE students ADD COLUMN pin_hash TEXT DEFAULT ''")
+
+        # Migrate knowledge_drafts table to add 'kind' column if missing
+        draft_cols = {row["name"] for row in c.execute("PRAGMA table_info(knowledge_drafts)").fetchall()}
+        if "kind" not in draft_cols:
+            c.execute("ALTER TABLE knowledge_drafts ADD COLUMN kind TEXT DEFAULT 'scholarship'")
+
+        # Delete non-scholarship rows mistakenly added to scholarships and required_documents
+        non_scholarship_names = [
+            "Fee Structure & Payment Policy",
+            "Campus Hostel Guidelines & Rules",
+            "University Academic Calendar",
+            "General Student Policy FAQ",
+        ]
+        for name in non_scholarship_names:
+            c.execute("DELETE FROM scholarships WHERE name = ?", (name,))
+            c.execute("DELETE FROM required_documents WHERE scholarship_name = ?", (name,))
+
+        # Update kind for existing knowledge drafts
+        c.execute("UPDATE knowledge_drafts SET kind = 'fee' WHERE file_name LIKE '%fee%' OR scholarship_name LIKE '%fee%'")
+        c.execute("UPDATE knowledge_drafts SET kind = 'hostel' WHERE file_name LIKE '%hostel%' OR scholarship_name LIKE '%hostel%'")
+        c.execute("UPDATE knowledge_drafts SET kind = 'calendar' WHERE file_name LIKE '%calendar%' OR scholarship_name LIKE '%calendar%'")
+        c.execute("UPDATE knowledge_drafts SET kind = 'faq' WHERE file_name LIKE '%faq%' OR scholarship_name LIKE '%faq%'")
+
         c.commit()
 
     # Seed default scholarship facts, announcements, and deadline banner if empty

@@ -90,6 +90,7 @@ class Upload(BaseModel):
 
 class PublishPayload(BaseModel):
     scholarship_name: Optional[str] = None
+    kind: Optional[str] = None
     year: Optional[int] = None
     version: Optional[int] = None
     required_documents: Optional[list[str]] = None
@@ -330,6 +331,7 @@ async def kb_upload(request: Request, file: UploadFile = File(...)):
         "id": draft.id,
         "file_name": draft.file_name,
         "scholarship_name": draft.scholarship_name,
+        "kind": getattr(draft, "kind", "scholarship"),
         "year": draft.year,
         "version": draft.version,
         "required_documents": json.loads(draft.required_documents_json),
@@ -348,6 +350,7 @@ def kb_list_drafts(request: Request):
             "id": d.id,
             "file_name": d.file_name,
             "scholarship_name": d.scholarship_name,
+            "kind": getattr(d, "kind", "scholarship"),
             "year": d.year,
             "version": d.version,
             "required_documents": json.loads(d.required_documents_json),
@@ -370,6 +373,7 @@ def kb_get_draft(draft_id: int, request: Request):
         "id": d.id,
         "file_name": d.file_name,
         "scholarship_name": d.scholarship_name,
+        "kind": getattr(d, "kind", "scholarship"),
         "year": d.year,
         "version": d.version,
         "required_documents": json.loads(d.required_documents_json),

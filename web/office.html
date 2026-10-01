@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ScholarFlow - Financial Aid Office Console</title>
+  <title>Nimbus - Office Desk</title>
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -56,8 +56,8 @@
       <div class="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center text-white mx-auto mb-3 shadow-md">
         <span class="material-symbols-outlined text-[26px]">admin_panel_settings</span>
       </div>
-      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Office Review Console</h1>
-      <p class="text-slate-500 text-sm mt-1">Staff authentication for Financial Aid & Scholarship Office</p>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Office Desk</h1>
+      <p class="text-slate-500 text-sm mt-1">Staff portal to manage scholarships, fees, hostel, academic calendar, and student records</p>
     </div>
 
     <form id="adminLoginForm" onsubmit="handleAdminLogin(event)" class="space-y-4">
@@ -65,14 +65,15 @@
         <label for="adminPasscode" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Security Passcode (ADMIN_PASSCODE)</label>
         <input type="password" id="adminPasscode" required placeholder="Enter administrative passcode" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all">
       </div>
-      <button type="submit" class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm shadow-sm transition-all">Authenticate Staff Access</button>
+      <button type="submit" class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm shadow-sm transition-all">Sign In to Office Desk</button>
     </form>
 
-    <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+    <div class="mt-6 pt-4 border-t border-slate-100 text-center flex flex-col items-center gap-1.5">
       <a href="/" class="text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1">
         <span class="material-symbols-outlined text-[16px]">arrow_back</span>
         Return to Portal Hub
       </a>
+      <span class="text-[11px] text-slate-400 font-medium">Nimbus • by AI ClaN</span>
     </div>
   </div>
 </div>
@@ -88,8 +89,8 @@
           <span class="material-symbols-outlined text-[20px]">school</span>
         </div>
         <div class="flex flex-col">
-          <span class="font-display font-bold text-lg text-slate-900 tracking-tight leading-tight">ScholarFlow</span>
-          <span class="text-xs font-medium text-slate-400">Aid Officer Console</span>
+          <span class="font-display font-bold text-lg text-slate-900 tracking-tight leading-tight">Nimbus</span>
+          <span class="text-xs font-medium text-slate-400">Office Desk</span>
         </div>
       </div>
 
@@ -384,6 +385,10 @@
       </section>
 
     </main>
+
+    <footer class="w-full py-4 text-center text-xs text-slate-400 border-t border-slate-200 mt-auto bg-white/40">
+      <span>Nimbus Office Desk • Staff Administration • by AI ClaN</span>
+    </footer>
   </div>
 </div>
 

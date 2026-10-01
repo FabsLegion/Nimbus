@@ -26,8 +26,8 @@ def test_portal_html_routes():
     # 1. Landing page route /
     landing = client.get("/")
     assert landing.status_code == 200
-    assert "Student Portal" in landing.text
-    assert "Office Portal" in landing.text
+    assert "Student Hub" in landing.text
+    assert "Office Desk" in landing.text
     # Ensure no old dropdowns
     assert 'select id="sid"' not in landing.text
 

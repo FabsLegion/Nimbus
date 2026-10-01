@@ -20,7 +20,8 @@ from src.rag.ingest import add_document_chunks, delete_source_chunks
 from src.services.llm import ask_llm
 
 class KBDraftExtraction(BaseModel):
-    scholarship_name: str = Field(description="Full name of scholarship program")
+    scholarship_name: str = Field(description="Full name of scholarship program or policy document title")
+    kind: str = Field(default="scholarship", description="Document type: scholarship, fee, hostel, calendar, faq, or notice")
     year: int = Field(default=2026, description="Academic year")
     version: int = Field(default=1, description="Version number of policy")
     required_documents: list[str] = Field(default_factory=list, description="List of required certificates/documents")
@@ -82,10 +83,24 @@ def _clean_json_response(raw_text: str) -> str:
         return cleaned[start : end + 1]
     return cleaned
 
+def _detect_kind(text: str, filename: str = "") -> str:
+    comb = f"{filename} {text[:1000]}".lower()
+    if any(k in comb for k in ["fee", "tuition", "payment policy"]):
+        return "fee"
+    if any(k in comb for k in ["hostel", "mess", "curfew", "warden", "room allocation"]):
+        return "hostel"
+    if any(k in comb for k in ["calendar", "academic calendar", "semester start", "re-opening"]):
+        return "calendar"
+    if any(k in comb for k in ["faq", "frequently asked"]):
+        return "faq"
+    if any(k in comb for k in ["notice", "circular", "announcement"]):
+        return "notice"
+    return "scholarship"
+
 def extract_draft_metadata(full_text: str) -> dict:
     """Call LLM in JSON mode to extract structured draft metadata with one retry."""
-    system = "You are a specialized university scholarship data extraction system. You must output ONLY valid JSON adhering to the required schema."
-    prompt = f"""Extract the structured scholarship metadata from the document text below:
+    system = "You are a specialized university document extraction system. Classify the document kind (scholarship, fee, hostel, calendar, faq, notice) and output strictly valid JSON adhering to the required schema."
+    prompt = f"""Extract structured metadata and classify the document from the text below:
 
 DOCUMENT TEXT:
 \"\"\"
@@ -94,13 +109,15 @@ DOCUMENT TEXT:
 
 Return a JSON object with this exact structure:
 {{
-  "scholarship_name": "Full Scholarship Name",
+  "scholarship_name": "Full Document Title or Scholarship Name",
+  "kind": "scholarship",
   "year": 2026,
   "version": 1,
   "required_documents": ["Identity Proof", "Income Certificate", ...],
   "dates": {{"deadline": "...", "verification": "...", "results": "..."}},
   "offices": [{{"name": "...", "category": "..."}}]
 }}
+Valid values for "kind": "scholarship", "fee", "hostel", "calendar", "faq", "notice".
 """
     # Attempt 1
     for attempt in range(2):
@@ -108,12 +125,15 @@ Return a JSON object with this exact structure:
             resp = ask_llm(system, prompt if attempt == 0 else prompt + "\nNOTE: Return strictly valid JSON with double-quoted keys.")
             json_str = _clean_json_response(resp)
             validated = KBDraftExtraction.model_validate_json(json_str)
-            return validated.model_dump()
+            res = validated.model_dump()
+            if not res.get("kind") or res["kind"] not in ["scholarship", "fee", "hostel", "calendar", "faq", "notice"]:
+                res["kind"] = _detect_kind(full_text)
+            return res
         except Exception as e:
             if attempt == 1:
                 # Fallback extraction from first line header if available
                 first_line = full_text.split("\n")[0] if full_text else ""
-                name, yr, ver = "New Scholarship", 2026, 1
+                name, yr, ver = "New Document", 2026, 1
                 if "|" in first_line:
                     parts = [p.strip() for p in first_line.split("|")]
                     if len(parts) >= 3:
@@ -122,21 +142,28 @@ Return a JSON object with this exact structure:
                         except: pass
                         try: ver = int(parts[2].lstrip("v"))
                         except: pass
+                kind = _detect_kind(f"{name} {full_text}")
                 return {
                     "scholarship_name": name,
+                    "kind": kind,
                     "year": yr,
                     "version": ver,
-                    "required_documents": ["Identity Proof", "Marksheet"],
-                    "dates": {"deadline": "Tonight, 11:59 PM"},
+                    "required_documents": ["Identity Proof", "Marksheet"] if kind == "scholarship" else [],
+                    "dates": {"deadline": "Tonight, 11:59 PM"} if kind == "scholarship" else {},
                     "offices": [],
                 }
 
 def create_draft(file_name: str, extracted: dict, chunks: list[dict]) -> KnowledgeDraft:
     """Save extracted draft into knowledge_drafts table."""
+    kind = extracted.get("kind")
+    if not kind or kind not in ["scholarship", "fee", "hostel", "calendar", "faq", "notice"]:
+        kind = _detect_kind(extracted.get("scholarship_name", ""), file_name)
+
     with get_session() as session:
         draft = KnowledgeDraft(
             file_name=file_name,
-            scholarship_name=extracted.get("scholarship_name", "Untitled Scholarship"),
+            scholarship_name=extracted.get("scholarship_name", "Untitled Document"),
+            kind=kind,
             year=int(extracted.get("year", 2026)),
             version=int(extracted.get("version", 1)),
             required_documents_json=json.dumps(extracted.get("required_documents", [])),
@@ -170,6 +197,8 @@ def publish_draft(draft_id: int, updates: Optional[dict] = None) -> dict:
         # Merge updates if provided by admin
         if updates:
             draft.scholarship_name = updates.get("scholarship_name", draft.scholarship_name)
+            if "kind" in updates and updates["kind"]:
+                draft.kind = updates["kind"]
             draft.year = int(updates.get("year", draft.year))
             draft.version = int(updates.get("version", draft.version))
             if "required_documents" in updates:
@@ -185,23 +214,26 @@ def publish_draft(draft_id: int, updates: Optional[dict] = None) -> dict:
         offices = json.loads(draft.offices_json)
         chunks = json.loads(draft.chunks_json)
 
-        # 1. Update/insert Scholarship
-        sch = session.exec(select(Scholarship).where(Scholarship.name == sch_name)).first()
-        if not sch:
-            sch = Scholarship(name=sch_name, year=draft.year, version=draft.version)
-            session.add(sch)
-        else:
-            sch.year = draft.year
-            sch.version = draft.version
+        # Only kind=scholarship creates rows in scholarships and required_documents.
+        # The other kinds are only indexed for the assistant.
+        if draft.kind == "scholarship":
+            # 1. Update/insert Scholarship
+            sch = session.exec(select(Scholarship).where(Scholarship.name == sch_name)).first()
+            if not sch:
+                sch = Scholarship(name=sch_name, year=draft.year, version=draft.version)
+                session.add(sch)
+            else:
+                sch.year = draft.year
+                sch.version = draft.version
 
-        # 2. Update/insert Required Documents
-        for doc in req_docs:
-            existing = session.exec(select(RequiredDocument).where(
-                RequiredDocument.scholarship_name == sch_name,
-                RequiredDocument.doc_type == doc
-            )).first()
-            if not existing:
-                session.add(RequiredDocument(scholarship_name=sch_name, doc_type=doc))
+            # 2. Update/insert Required Documents
+            for doc in req_docs:
+                existing = session.exec(select(RequiredDocument).where(
+                    RequiredDocument.scholarship_name == sch_name,
+                    RequiredDocument.doc_type == doc
+                )).first()
+                if not existing:
+                    session.add(RequiredDocument(scholarship_name=sch_name, doc_type=doc))
 
         # 3. Update timeline events
         for k, v in dates.items():
