@@ -1,4 +1,5 @@
 import json
+import os
 from src.database.db import conn
 from src.rag.retrieve import retrieve
 from src.services.checklist import checklist
@@ -7,6 +8,7 @@ from src.services.routing import classify, OFFICE
 
 CATALOG = ["Merit Scholarship - Undergraduate", "Merit Scholarship - Special Category"]
 T = json.load(open("data/master_timeline.json"))
+SCOPE_THRESHOLD = float(os.getenv("SCOPE_THRESHOLD", "30.0"))
 
 SYSTEM = """You are a university scholarship guidance assistant.
 1. Use only the provided sources and checklist as facts. Never invent requirements, dates or policies.
@@ -59,11 +61,13 @@ def answer(student_id, message, chosen=None):
         return reply("I found two scholarships with similar names. Which one are you applying for?",
                      "clarify", options=CATALOG)
 
-    current, older = retrieve(message, scholarship)
-    if not current:
-        log(student_id, cat, message, 0, "Scholarship Office")
-        return reply("I could not find reliable information for this. Please contact the Scholarship Office.",
-                     "escalated", next_action="Contact the Scholarship Office")
+    current, older, best_dist = retrieve(message, scholarship)
+    if not current or best_dist > SCOPE_THRESHOLD:
+        office = "Financial Aid / Scholarship Office"
+        log(student_id, "OUT_OF_SCOPE", message, 0, office)
+        return reply(f"This is outside the scholarship rules.\n\n"
+                     f"What to do next: please contact the {office}.",
+                     "out_of_scope", next_action=f"Contact {office}")
 
     items = checklist(student_id, scholarship)
     problems = [i for i in items if i[1] != "OK"]
