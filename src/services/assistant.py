@@ -43,8 +43,17 @@ def answer(student_id, message, chosen=None):
 
     if cat in OFFICE:                                   # not answerable from scholarship rules
         log(student_id, cat, message, 0, OFFICE[cat])
-        return reply(f"This looks like a {cat.lower()} issue, which I cannot resolve from the scholarship rules.\n\n"
-                     f"What to do next: contact the {OFFICE[cat]}.", "escalated", next_action=OFFICE[cat])
+        msg_text = (f"This looks like a {cat.lower()} issue, which I cannot resolve from the scholarship rules.\n\n"
+                     f"What to do next: contact the {OFFICE[cat]}.")
+        if s.get("language") and s["language"].lower() != "english":
+            try:
+                msg_text = ask_llm(
+                    f"Translate the following university guidance message into {s['language']}. Keep the office name '{OFFICE[cat]}' readable.",
+                    msg_text
+                )
+            except Exception:
+                pass
+        return reply(msg_text, "escalated", next_action=OFFICE[cat])
 
     if not scholarship:                                 # ambiguous: ask before answering
         return reply("I found two scholarships with similar names. Which one are you applying for?",
