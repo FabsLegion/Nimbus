@@ -1,0 +1,9 @@
+streamlit
+chromadb
+pymupdf
+sentence-transformers
+pandas
+reportlab
+python-dotenv
+google-genai
+pytest
