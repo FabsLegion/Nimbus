@@ -10,14 +10,9 @@ CATALOG = ["Merit Scholarship - Undergraduate", "Merit Scholarship - Special Cat
 T = json.load(open("data/master_timeline.json"))
 SCOPE_THRESHOLD = float(os.getenv("SCOPE_THRESHOLD", "30.0"))
 
-SYSTEM = """You are a university scholarship guidance assistant.
-1. Use only the provided sources and checklist as facts. Never invent requirements, dates or policies.
-2. If a CURRENT source and an OLDER source disagree, say there is a conflict and that the CURRENT source applies.
-3. Cite the source file name for each factual claim.
-4. Personalize the answer using the student's checklist.
-5. Explain in simple words, in the student's language.
-6. End with "What to do next:" and numbered steps. Mention the deadline.
-7. If the information is not in the sources, say so and name the right office."""
+SYSTEM = """You are a helpful university scholarship guidance assistant.
+Max 3 sentences. No file names. No step list. The interface shows steps, sources and the conflict.
+Explain clearly and concisely in the requested language. Use only the provided facts."""
 
 def get_student(sid):
     return dict(conn().execute("SELECT * FROM students WHERE student_id=?", (sid,)).fetchone())
@@ -34,57 +29,120 @@ def notify(sid, priority, msg):
         c.execute("INSERT INTO notifications(student_id,priority,message) VALUES (?,?,?)", (sid, priority, msg))
         c.commit()
 
-def reply(answer, status, sources=None, items=None, options=None, next_action=""):
-    return {"answer": answer, "status": status, "sources": sources or [], "checklist": items or [],
-            "options": options or [], "next_action": next_action}
+def reply(answer, status, sources=None, items=None, options=None, next_action="", conflict=None, steps=None, office=""):
+    return {
+        "answer": answer,
+        "status": status,
+        "sources": sources or [],
+        "checklist": items or [],
+        "options": options or [],
+        "next_action": next_action,
+        "conflict": conflict,
+        "steps": steps or [],
+        "office": office,
+    }
 
-def answer(student_id, message, chosen=None):
+def detect_conflict(query, current, older):
+    """Detect if there is an active rule conflict relevant to the query/chunks."""
+    if not older:
+        return None
+    # Check if this query or current chunks touch income certificate conflict
+    text_corpus = (query + " " + " ".join(h["text"] for h in current)).lower()
+    if any(k in text_corpus for k in ["income", "certificate", "document", "previous", "current-year", "valid"]):
+        older_text = next((h["text"] for h in older if "income" in h["text"].lower()), older[0]["text"])
+        current_text = next((h["text"] for h in current if "income" in h["text"].lower()), current[0]["text"])
+        return {
+            "older_rule": older_text,
+            "older_source": older[0]["source"],
+            "older_year": older[0]["year"],
+            "current_rule": current_text,
+            "current_source": current[0]["source"],
+            "current_year": current[0]["year"],
+        }
+    return None
+
+def build_steps(problems, deadline, query=""):
+    """Deterministically construct What to do next numbered steps."""
+    q_lower = query.lower()
+    if any(w in q_lower for w in ["after submit", "what happens after", "once submitted", "after i submit"]):
+        return [
+            f"Verification phase: {T.get('verification', 'Document scrutiny')}.",
+            f"Results announcement: {T.get('results', 'Merit list published')}.",
+            f"Allotment & disbursement: {T.get('allotment', 'Scholarship credited')}.",
+        ]
+    steps = []
+    for name, st, why in problems:
+        if st == "MISSING":
+            steps.append(f"Upload your missing {name}.")
+        elif st == "INVALID":
+            steps.append(f"Replace your {name}: {why}.")
+        elif st == "WRONG_CATEGORY":
+            steps.append(f"Fix category mismatch for {name}: {why}.")
+    if not problems:
+        steps.append("Review all uploaded documents.")
+        steps.append(f"Submit your finalized application before {deadline}.")
+    else:
+        steps.append(f"Submit your application before the deadline: {deadline}.")
+    return steps
+
+def answer(student_id, message, chosen=None, lang_override=None):
     s = get_student(student_id)
+    language = lang_override or s.get("language") or "English"
     cat = classify(message)
     scholarship = chosen or s["scholarship"]
 
     if cat in OFFICE:                                   # not answerable from scholarship rules
-        log(student_id, cat, message, 0, OFFICE[cat])
-        msg_text = (f"This looks like a {cat.lower()} issue, which I cannot resolve from the scholarship rules.\n\n"
-                     f"What to do next: contact the {OFFICE[cat]}.")
-        if s.get("language") and s["language"].lower() != "english":
+        office = OFFICE[cat]
+        log(student_id, cat, message, 0, office)
+        msg_text = (f"This looks like a {cat.lower()} issue, which is handled directly by the {office}.\n\n"
+                    f"What to do next: contact the {office}.")
+        if language.lower() != "english":
             try:
                 msg_text = ask_llm(
-                    f"Translate the following university guidance message into {s['language']}. Keep the office name '{OFFICE[cat]}' readable.",
+                    f"Translate the following university guidance message into {language}. Keep the office name '{office}' readable.",
                     msg_text
                 )
             except Exception:
                 pass
-        return reply(msg_text, "escalated", next_action=OFFICE[cat])
+        return reply(msg_text, "escalated", next_action=f"Contact {office}", office=office)
 
     if not scholarship:                                 # ambiguous: ask before answering
-        return reply("I found two scholarships with similar names. Which one are you applying for?",
+        return reply("I found multiple scholarships matching your profile. Which one are you applying for?",
                      "clarify", options=CATALOG)
 
     current, older, best_dist = retrieve(message, scholarship)
     if not current or best_dist > SCOPE_THRESHOLD:
         office = "Financial Aid / Scholarship Office"
         log(student_id, "OUT_OF_SCOPE", message, 0, office)
-        return reply(f"This is outside the scholarship rules.\n\n"
+        return reply(f"This question is outside the scholarship rules.\n\n"
                      f"What to do next: please contact the {office}.",
-                     "out_of_scope", next_action=f"Contact {office}")
+                     "out_of_scope", next_action=f"Contact {office}", office=office)
 
     items = checklist(student_id, scholarship)
     problems = [i for i in items if i[1] != "OK"]
-    context = (f"STUDENT: {s['name']}, {s['branch']}, language: {s['language']}\n"
+    conflict = detect_conflict(message, current, older)
+    steps = build_steps(problems, T["deadline"], message)
+
+    timeline_str = ", ".join(f"{k.replace('_', ' ').title()}: {v}" for k, v in T.items())
+    context = (f"STUDENT: {s['name']}, {s['branch']}\n"
+               f"LANGUAGE: {language}\n"
                f"SCHOLARSHIP: {scholarship}\n"
-               f"CURRENT SOURCE ({current[0]['source']}): {[h['text'] for h in current]}\n"
-               f"OLDER SOURCE ({older[0]['source'] if older else 'none'}), superseded: {[h['text'] for h in older]}\n"
-               f"CHECKLIST (decided by code): {items}\n"
-               f"DEADLINE: {T['deadline']}\nQUESTION: {message}\nReply in {s['language']}.")
+               f"TIMELINE: {timeline_str}\n"
+               f"CURRENT RULES: {[h['text'] for h in current]}\n"
+               f"SUPERSEDED RULES: {[h['text'] for h in older] if older else 'None'}\n"
+               f"CHECKLIST STATUS: {items}\n"
+               f"QUESTION: {message}\n"
+               f"Remember: Max 3 plain sentences in {language}. No file names. No step list.")
+
     try:
-        text = ask_llm(SYSTEM, context)
-    except Exception:                                   # fallback so the demo never breaks
-        lines = [f"- {n}: {st} {why}" for n, st, why in problems] or ["- All documents look fine."]
-        text = (f"Source: {current[0]['source']}\n" + "\n".join(lines) +
-                f"\n\nWhat to do next: fix the items above before {T['deadline']}.")
+        text = ask_llm(SYSTEM, context).strip()
+    except Exception:
+        text = f"Here is the guidance for your {scholarship}. Please review your checklist status and submit all documents before {T['deadline']}."
+
     if problems:
         notify(student_id, "URGENT", f"{problems[0][0]} needs attention. Deadline: {T['deadline']}")
     log(student_id, cat, message, 1)
+
     sources = list({h["source"] for h in current + older})
-    return reply(text, "action_required" if problems else "info", sources, items)
+    status = "action_required" if problems else "all_clear"
+    return reply(text, status, sources=sources, items=items, conflict=conflict, steps=steps)
