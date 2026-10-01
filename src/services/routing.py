@@ -1,38 +1,43 @@
 from src.services.llm import ask_llm
+from src.database.db import get_offices, get_routing_rules
 
-RULES = [
-    ("PAYMENT", ["payment", "credited", "not received", "money"]),
-    ("PORTAL", ["portal crash", "login", "not loading", "website"]),
-    ("HOSTEL", ["hostel"]), ("FEES", ["fee"]),
-    ("DEADLINE", ["deadline", "last date"]), ("VERIFICATION", ["verification", "verified"]),
-    ("RESULT", ["result"]),
-    ("DOCUMENT", ["document", "certificate", "upload", "missing", "marksheet"]),
-]
-# Topics the assistant cannot answer from scholarship rules: send to a human office
-OFFICE = {"PAYMENT": "Scholarship / Finance Office", "PORTAL": "IT Helpdesk",
-          "HOSTEL": "Hostel Office", "FEES": "Accounts Section"}
+class _OfficeProxy(dict):
+    """Dynamic proxy for office mappings queried from the database."""
+    def __getitem__(self, key):
+        return get_offices()[key]
+    def get(self, key, default=None):
+        return get_offices().get(key, default)
+    def __contains__(self, key):
+        return key in get_offices()
+    def items(self):
+        return get_offices().items()
 
-VALID_CATEGORIES = ["PAYMENT", "PORTAL", "HOSTEL", "FEES", "DEADLINE", "VERIFICATION", "RESULT", "DOCUMENT", "SCHOLARSHIP"]
+OFFICE = _OfficeProxy()
+
+class _RulesProxy(list):
+    """Dynamic proxy for routing rules queried from the database."""
+    def __iter__(self):
+        return iter(get_routing_rules())
+    def __len__(self):
+        return len(get_routing_rules())
+
+RULES = _RulesProxy()
 
 def classify_with_llm(msg: str) -> str:
-    prompt = f"""Classify the user's inquiry into exactly one of these categories:
-- PAYMENT (queries about money, stipend, scholarship funds credited, bank deposit, unpaid funds)
-- PORTAL (login issues, technical glitches, portal errors, site not loading)
-- HOSTEL (hostel rooms, mess, hostel accommodation)
-- FEES (tuition fees, college fee payment, fee receipts)
-- DEADLINE (due dates, last dates, submission timelines)
-- VERIFICATION (document verification status, scrutiny, scrutiny dates)
-- RESULT (scholarship selection results, merit list announcements)
-- DOCUMENT (certificates, marksheets, uploads, required paperwork)
-- SCHOLARSHIP (general scholarship criteria, eligibility, application process)
+    offices = get_offices()
+    prompt = f"""Classify the user's inquiry into one of these specific office categories:
+- PAYMENT: inquiries specifically about scholarship stipend, money credited, or bank funds
+- PORTAL: technical website errors, login failures, or portal crashes
+- HOSTEL: hostel room allocations, mess, or boarding facilities
+- FEES: tuition fees or college admission fee receipts
+- SCHOLARSHIP: scholarship rules, documents, deadlines, or any other general/unrelated inquiries
 
-The inquiry may be in any language (e.g. English, Kannada, Hindi).
 Inquiry: "{msg}"
 
-Respond with ONLY the category name in capital letters (e.g. PAYMENT or SCHOLARSHIP) and nothing else."""
+Respond with ONLY the exact category name in capital letters (e.g. PAYMENT or SCHOLARSHIP) and nothing else."""
     try:
         res = ask_llm("You are a strict text classification model.", prompt).strip().upper()
-        for cat in VALID_CATEGORIES:
+        for cat in list(offices.keys()) + ["SCHOLARSHIP"]:
             if cat in res:
                 return cat
         return "SCHOLARSHIP"
@@ -41,8 +46,8 @@ Respond with ONLY the category name in capital letters (e.g. PAYMENT or SCHOLARS
 
 def classify(msg):
     m = msg.lower()
-    matched = next((cat for cat, words in RULES if any(w in m for w in words)), None)
+    rules = get_routing_rules()
+    matched = next((cat for cat, words in rules if any(w in m for w in words)), None)
     if matched:
         return matched
     return classify_with_llm(msg)
-

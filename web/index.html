@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1120"><title>Nimbus</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1120;--panel:#131c31;--line:#ffffff14;--tx:#f1f5f9;--mut:#94a3b8;--teal:#14b8a6;--red:#f87171;--amb:#fbbf24;--grn:#34d399;--blu:#93c5fd;--vio:#c084fc}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(900px 500px at 85% -10%,#14b8a62e,transparent),var(--bg);color:var(--tx);font:15px/1.5 Figtree,system-ui,sans-serif;min-height:100vh}
+h1,h2,h3{font-family:'Bricolage Grotesque',Figtree,sans-serif;margin:0}
+button{font:inherit;cursor:pointer;border:0;color:inherit}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.top{display:flex;gap:12px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap;position:sticky;top:0;background:#0b1120e6;backdrop-filter:blur(10px);z-index:5}
+.logo{font:700 22px 'Bricolage Grotesque';letter-spacing:-.02em;margin-right:auto}.logo span{color:var(--teal)}
+select,input[type=text]{background:var(--panel);border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:8px 10px;font:inherit}
+.seg{display:flex;background:var(--panel);border-radius:10px;padding:3px}.seg button{background:none;padding:6px 14px;border-radius:8px;color:var(--mut)}.seg .on{background:var(--teal);color:#042f2a;font-weight:600}
+main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;padding:18px 20px;max-width:1200px;margin:auto}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.card{background:background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.hero{grid-column:1/-1;display:flex;align-items:center;gap:20px;flex-wrap:wrap}.hero h2{font-size:24px}.hero p{margin:2px 0 0;color:var(--mut)}
+.ring{width:84px;height:84px;position:relative}.ring b{position:absolute;inset:0;display:grid;place-items:center;font:700 18px 'Bricolage Grotesque'}
+.dl{margin-left:auto;text-align:right;background:#ef444426;border:1px solid #ef444455;border-radius:12px;padding:8px 14px}.dl small{color:#fca5a5}.dl div{font-weight:700;font-size:17px}
+#msgs{display:flex;flex-direction:column;gap:12px;min-height:340px;max-height:58vh;overflow:auto;padding-right:4px}
+.u{align-self:flex-end;background:var(--teal);color:#042f2a;padding:8px 14px;border-radius:16px 16px 4px 16px;max-width:80%}
+.a{align-self:flex-start;background:#1b2641;border:1px solid var(--line);padding:12px 14px;border-radius:16px 16px 16px 4px;max-width:92%;animation:pop .25s}
+@keyframes pop{from{transform:scale(.97);opacity:0}}@media(prefers-reduced-motion:reduce){.a{animation:none}}
+.ban{border-left:4px solid;border-radius:8px;padding:7px 10px;font-weight:600;font-size:13px;margin-bottom:8px}
+.action_required{background:#ef444420;border-color:#ef4444;color:#fca5a5}.all_clear{background:#10b98120;border-color:#10b981;color:#6ee7b7}
+.escalated{background:#3b82f620;border-color:#3b82f6;color:var(--blu)}.out_of_scope{background:#f59e0b20;border-color:#f59e0b;color:#fcd34d}
+.conf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;font-size:13px}.conf div{border-radius:8px;padding:8px}
+.old{background:#ef444414;border:1px dashed #ef444466;color:var(--mut);text-decoration:line-through}.new{background:#10b98114;border:1px solid #10b98166}
+.conf small{display:block;color:var(--mut);text-decoration:none}
+.steps{margin:10px 0 0;padding:0;list-style:none;border-left:3px solid var(--teal);padding-left:12px}.steps li{margin:4px 0;display:flex;gap:8px}
+.steps i{font-style:normal;background:var(--teal);color:#042f2a;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none;margin-top:2px}
+.chip{display:inline-block;background:#14b8a626;border:1px solid #14b8a659;color:#5eead4;border-radius:99px;padding:2px 10px;font-size:12px;margin:6px 6px 0 0}
+.off{margin-top:10px;border-left:3px solid #3b82f6;background:#3b82f61a;border-radius:8px;padding:8px 10px}
+.row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.row input{flex:1;min-width:160px}
+.btn{background:var(--teal);color:#042f2a;font-weight:600;border-radius:10px;padding:9px 16px}.ghost{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:13px;color:var(--mut)}.ghost:hover{color:var(--tx);border-color:var(--teal)}
+.tabs{display:flex;gap:4px;margin-bottom:12px}.tabs button{background:none;color:var(--mut);padding:6px 12px;border-radius:8px}.tabs .on{background:#14b8a622;color:#5eead4}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#1b264166;border-radius:10px;padding:9px 12px;margin-bottom:6px}
+.pill{border-radius:99px;padding:2px 10px;font-size:12px;font-weight:600}.OK{background:#10b98133;color:var(--grn)}.MISSING{background:#ef444433;color:var(--red)}.INVALID{background:#f59e0b33;color:var(--amb)}.WRONG_CATEGORY{background:#a855f733;color:var(--vio)}
+.why{font-size:12px;color:var(--mut);margin:-2px 0 8px 12px}.tl{border-left:2px solid var(--teal);margin-left:6px}.tl div{padding:0 0 14px 16px;position:relative}.tl div:before{content:"";position:absolute;left:-6px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--teal)}.tl .nx:before{box-shadow:0 0 0 5px #14b8a640}
+.tl small{color:var(--mut);text-transform:capitalize;display:block}.warn{background:#f59e0b1f;border:1px solid #f59e0b;border-radius:10px;padding:8px 10px;margin-top:8px;color:#fcd34d;font-size:13px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}@media(max-width:700px){.grid4{grid-template-columns:1fr 1fr}}
+.kpi small{color:var(--mut)}.kpi div{font:700 32px 'Bricolage Grotesque'}.bar{height:8px;background:var(--teal);border-radius:4px;margin:2px 0 8px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--teal);color:#042f2a;padding:10px 18px;border-radius:12px;font-weight:600;display:none}
+</style></head><body>
+<header class="top"><div class="logo">Nimbus<span>.</span></div>
+<div class="seg"><button id="vS" class="on">Student</button><button id="vA">Office</button></div>
+<select id="sid" aria-label="Student"></select><select id="lang" aria-label="Language"><option>English</option><option>Kannada</option><option>Hindi</option></select>
+<a href="/admin.html" class="ghost" style="text-decoration:none;margin-left:auto;font-size:13px">Knowledge Base &rarr;</a></header>
+
+<main id="student">
+ <section class="card hero"><div class="ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#ffffff14" stroke-width="3"/><circle id="arc" cx="18" cy="18" r="15" fill="none" stroke="#14b8a6" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 100" transform="rotate(-90 18 18)" pathLength="100" style="transition:stroke-dasharray .8s"/></svg><b id="pct">0%</b></div>
+ <div><h2 id="hello"></h2><p id="sub"></p></div><div class="dl"><small>Deadline</small><div id="dl"></div></div></section>
+ <section class="card"><div id="msgs" aria-live="polite"></div>
+  <div class="row" id="opts"></div>
+  <div class="row"><button class="ghost" data-q="What documents are missing or need fixing for my scholarship?">What's missing?</button><button class="ghost" data-q="What happens after I submit my application?">What happens after submit?</button><button class="ghost" data-q="Who do I contact about payment and portal support?">Who do I contact?</button></div>
+  <form class="row" id="f"><input type="text" id="q" placeholder="Ask about your scholarship or documents" autocomplete="off"><button class="btn">Send</button></form></section>
+ <aside class="card"><div class="tabs"><button data-t="c" class="on">Checklist</button><button data-t="t">Timeline</button><button data-t="n">Alerts</button></div><div id="pane"></div></aside>
+</main>
+
+<main id="admin" style="display:none"></main><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),api=(u,b)=>fetch(u,b&&{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let S=null,chosen={},tab='c',hist={},pending=null;
+const BAN={action_required:'Action required: fix documents before the deadline',all_clear:'All clear: your documents meet current rules',escalated:'Escalated to the right office',out_of_scope:'Outside scholarship policy'};
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',2500)}
+async function load(){
+ const sid=$('#sid').value;S=await api(`/api/state/${sid}${chosen[sid]?'?scholarship='+encodeURIComponent(chosen[sid]):''}`);
+ const ok=S.checklist.filter(i=>i[1]=='OK').length,n=S.checklist.length,p=n?Math.round(ok/n*100):0;
+ $('#hello').textContent=`Hi ${S.student.name}`;$('#sub').textContent=`${S.student.branch}, ${S.student.year}. ${S.scholarship||'No scholarship chosen yet'}`;
+ $('#dl').textContent=S.timeline.deadline;$('#pct').textContent=p+'%';$('#arc').setAttribute('stroke-dasharray',`${p} 100`);
+ pane();msgs()}
+function pane(){const P=$('#pane');
+ if(tab=='c'){P.innerHTML=S.scholarship?S.checklist.map(([n,s,w])=>`<div class="item"><b>${esc(n)}</b><span class="pill ${s}">${s.replace('_',' ').toLowerCase()}</span></div>${w?`<div class="why">${esc(w)}</div>`:''}`).join('')+
+  `<div class="row"><select id="dt">${S.required.map(r=>`<option>${esc(r)}</option>`)}</select><input type="file" id="fl"></div><div id="wn"></div>`:'<p style="color:var(--mut)">Pick a scholarship in the chat to see your checklist.</p>';
+  const fl=$('#fl');if(fl)fl.onchange=async()=>{const r=await api('/api/upload',{student_id:$('#sid').value,doc_type:$('#dt').value,file_name:fl.files[0].name});
+   if(r.warning){await load();$('#wn').innerHTML=`<div class="warn">Category mismatch: ${esc(r.warning)}</div>`}else{toast('Document uploaded');load()}}}
+ if(tab=='t'){const k=Object.entries(S.timeline);P.innerHTML=`<div class="tl">${k.map(([a,b],i)=>`<div class="${i==0?'nx':''}"><small>${a.replace('_',' ')}</small><b>${esc(b)}</b></div>`).join('')}</div>`}
+ if(tab=='n'){const C={'URGENT':'#ef4444','DEADLINE':'#f59e0b','ACTION REQUIRED':'#8b5cf6','INFORMATIONAL':'#3b82f6'};P.innerHTML=S.notifications.map(n=>`<div class="item" style="border-left:3px solid ${C[n.priority]||'#3b82f6'}"><div><b style="font-size:12px;color:${C[n.priority]||'#3b82f6'}">${n.priority}</b><div>${esc(n.message)}</div></div></div>`).join('')||'<p style="color:var(--mut)">No alerts. You are in good standing.</p>'}
+function card(r){let h=`<div class="ban ${r.status}">${BAN[r.status]||''}</div>`,c=r.conflict;
+ if(c)h+=`<div class="conf"><div class="old"><small>Superseded (${c.older_year})</small>${esc(c.older_rule)}<small>${esc(c.older_source)}</small></div><div class="new"><small>Current rule (${c.current_year})</small>${esc(c.current_rule)}<small>${esc(c.current_source)}</small></div></div>`;
+ h+=`<div>${esc(r.answer).replace(/\n/g,'<br>')}</div>`;
+ if(r.steps?.length)h+=`<ul class="steps">${r.steps.map((s,i)=>`<li><i>${i+1}</i>${esc(s)}</li>`).join('')}</ul>`;
+ if(r.office)h+=`<div class="off"><b>${esc(r.office)}</b><br><small style="color:var(--mut)">9:30 AM to 5:00 PM, Admin Block</small></div>`;
+ return h+(r.sources||[]).map(s=>`<span class="chip">${esc(s)}</span>`).join('')}
+function msgs(){const sid=$('#sid').value,H=hist[sid]||[];$('#msgs').innerHTML=H.length?H.map(m=>m.u?`<div class="u">${esc(m.u)}</div>`:`<div class="a">${card(m.r)}</div>`).join(''):`<div class="a">Ask me about requirements, deadlines or who to contact.</div>`;
+ $('#msgs').scrollTop=1e9;$('#opts').innerHTML=pending&&pending.sid==sid?pending.r.options.map(o=>`<button class="btn" data-o="${esc(o)}">${esc(o)}</button>`).join(''):''}
+async function ask(q){const sid=$('#sid').value;(hist[sid]??=[]).push({u:q});msgs();
+ const r=await api('/api/chat',{student_id:sid,message:q,chosen:chosen[sid]||null,language:$('#lang').value});
+ if(r.status=='clarify')pending={sid,q,r};else hist[sid].push({r});
+ await load()}
+$('#f').onsubmit=e=>{e.preventDefault();const v=$('#q').value.trim();if(v){$('#q').value='';ask(v)}};
+document.addEventListener('click',e=>{const t=e.target;
+ if(t.dataset.q)ask(t.dataset.q);
+ if(t.dataset.t){tab=t.dataset.t;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b==t));pane()}
+ if(t.dataset.o){const sid=$('#sid').value,q=pending.q;chosen[sid]=t.dataset.o;pending=null;hist[sid].pop();ask(q)}});
+async function admin(){const d=await api('/api/admin'),mx=Math.max(1,...Object.values(d.categories));
+ const rate=d.total?Math.round((1-d.unresolved.length/d.total)*100):100;
+ $('#admin').style.cssText='display:block;max-width:1200px;margin:auto;padding:18px 20px';
+ $('#admin').innerHTML=`<h2 style="margin-bottom:12px">Scholarship office</h2><div class="grid4"><div class="card kpi"><small>Total inquiries</small><div>${d.total}</div></div><div class="card kpi"><small>Unresolved</small><div style="color:var(--red)">${d.unresolved.length}</div></div><div class="card kpi"><small>Handled by AI</small><div style="color:var(--grn)">${rate}%</div></div><div class="card kpi"><small>Document issues</small><div style="color:var(--amb)">${d.problems.length}</div></div></div>
+ <div class="grid4" style="grid-template-columns:1fr 1fr;margin-top:12px"><div class="card"><h3>Query categories</h3>${Object.entries(d.categories).map(([k,v])=>`<small>${k} (${v})</small><div class="bar" style="width:${v/mx*100}%"></div>`).join('')}</div>
+ <div class="card"><h3>Documents needing attention</h3>${d.problems.map(p=>`<div class="item"><span><b>${p.student}</b> ${esc(p.document)}</span><span class="pill ${p.problem}">${p.problem.replace('_',' ').toLowerCase()}</span></div>`).join('')||'All verified'}</div></div>
+ <div class="card" style="margin-top:12px"><h3 style="margin-bottom:8px">Unresolved cases</h3>${d.unresolved.map(r=>`<div class="item"><span><b>${r.student_id}</b> ${esc(r.text)}</span><span class="pill INVALID">${esc(r.office||r.category)}</span></div>`).join('')||'No pending escalations'}</div>
+ <div class="card" style="margin-top:12px"><h3 style="margin-bottom:8px">AI provider log</h3>${d.llm_log.map(l=>`<div class="item"><span>${l.provider}</span><span>${l.sec}s</span><span class="pill ${l.ok?'OK':'MISSING'}">${l.ok?'ok':'failed'}</span></div>`).join('')||'<small style="color:var(--mut)">No calls yet</small>'}</div>`}
+function view(a){$('#student').style.display=a?'none':'grid';$('#admin').style.display=a?'block':'none';$('#vS').classList.toggle('on',!a);$('#vA').classList.toggle('on',a);if(a)admin()}
+$('#vS').onclick=()=>view(false);$('#vA').onclick=()=>view(true);$('#sid').onchange=()=>{pending=null;load()};
+api('/api/students').then(l=>{$('#sid').innerHTML=l.map(s=>`<option value="${s.student_id}">${s.student_id} ${esc(s.name)}</option>`).join('');load()});
+</script></body></html>

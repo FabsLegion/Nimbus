@@ -1,0 +1,5 @@
+category,name,email,phone,description,routing_keywords
+SCHOLARSHIP,Scholarship Office,scholarships@univ.edu,x4100,Handles scholarship eligibility criteria application deadlines and stipend status,scholarship eligibility stipend fee reduction merit deadline
+HOSTEL,Hostel Administration Office,hostel@univ.edu,x4102,Handles hostel allocation room fees and mess dues clearance,hostel room mess warden boarding residence
+ACADEMIC,Academic Dean Office,academics@univ.edu,x4103,Handles course registration transcripts grade cards and academic calendar,exam marksheet transcript credits cgpa grade registration
+DISBURSAL,Accounts & Finance Office,finance@univ.edu,x4104,Handles electronic fund transfers bank verification and account credits,bank account refund payment disbursement transfer ifsc

@@ -1,10 +1,10 @@
 import json
 import streamlit as st
-from src.database.db import conn
+from src.database.db import conn, get_timeline
 from src.services.assistant import answer, get_student
 from src.services.checklist import checklist, guess, REQS
 
-T = json.load(open("data/master_timeline.json"))
+T = get_timeline()
 
 def student_view():
     ss = st.session_state

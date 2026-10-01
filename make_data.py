@@ -1,8 +1,9 @@
 import json, os
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from src.database.db import get_timeline
 
-T = json.load(open("data/master_timeline.json"))
+T = get_timeline()
 os.makedirs("data/scholarships", exist_ok=True)
 
 def pdf(path, lines):

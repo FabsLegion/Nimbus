@@ -1,0 +1,205 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Nimbus — Student Hub &amp; Office Desk</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col selection:bg-blue-100 selection:text-blue-700">
+<!-- Minimal Top Navbar -->
+<header class="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-slate-200/80">
+<div class="max-w-6xl mx-auto h-16 px-6 flex items-center justify-between">
+<!-- Brand Logo -->
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
+<span class="material-symbols-outlined text-[22px]">school</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-bold text-xl tracking-tight text-slate-900">ScholarFlow</span>
+</div>
+</div>
+<!-- Hackathon Badge & Quick Links -->
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+<span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+          Hackathon 2026<br><br></span>
+<a class="hidden sm:inline-flex text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors px-2 py-1" href="#how-it-works">
+          How It Works
+        </a>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 w-full max-w-6xl mx-auto px-6 py-12 md:py-16 flex flex-col items-center">
+<!-- Hero Header -->
+<section class="text-center max-w-3xl mb-12 md:mb-16">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-medium mb-5 shadow-xs">
+<span class="material-symbols-outlined text-[15px]">auto_awesome</span>
+        First-Year Student &amp; Office Navigator
+      </div>
+<h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
+        Student Hub &amp; <span class="text-blue-600">Office Desk</span>
+      </h1>
+<p class="mt-4 text-base sm:text-lg text-slate-600 font-normal leading-relaxed max-w-2xl mx-auto font-body">
+        Helping first-year students with scholarships, fees, hostel, the academic calendar and general questions.
+      </p>
+</section>
+<!-- Side-by-Side Dual Portal Cards -->
+<section class="w-full grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch mb-20">
+<!-- Card 1: Student Hub -->
+<div class="group relative flex flex-col justify-between bg-white rounded-2xl border border-slate-200 p-7 sm:p-8 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300">
+<div>
+<!-- Header and Icon -->
+<div class="flex items-center justify-between mb-6">
+<div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">person_search</span>
+</div>
+<span class="px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider bg-slate-100 text-slate-600">
+              For Students
+            </span>
+</div>
+<h2 class="text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+            Student Hub
+          </h2>
+<p class="mt-2.5 text-slate-600 font-body text-sm sm:text-base leading-relaxed">
+            Helping first-year students with scholarships, fees, hostel, the academic calendar and general questions.
+          </p>
+<!-- Clean Feature Tags -->
+<div class="mt-6 pt-6 border-t border-slate-100 flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium">
+<span class="material-symbols-outlined text-blue-600 text-[16px]">school</span>
+              Scholarships &amp; Aid
+            </span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium">
+<span class="material-symbols-outlined text-blue-600 text-[16px]">apartment</span>
+              Fees &amp; Hostel
+            </span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium">
+<span class="material-symbols-outlined text-blue-600 text-[16px]">calendar_month</span>
+              Calendar &amp; FAQ
+            </span>
+</div>
+</div>
+<!-- Action CTA -->
+<div class="mt-8 pt-2">
+<a class="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm sm:text-base shadow-sm hover:shadow-md hover:shadow-blue-500/20 active:scale-[0.99] transition-all" id="linkStudentPortal" href="/student">
+<span class="">Open Student Hub</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Card 2: Office Desk -->
+<div class="group relative flex flex-col justify-between bg-white rounded-2xl border border-slate-200 p-7 sm:p-8 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300">
+<div>
+<!-- Header and Icon -->
+<div class="flex items-center justify-between mb-6">
+<div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<span class="px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider bg-slate-100 text-slate-600">
+              For Administration
+            </span>
+</div>
+<h2 class="text-2xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+            Office Desk
+          </h2>
+<p class="mt-2.5 text-slate-600 font-body text-sm sm:text-base leading-relaxed">
+            Staff management for scholarships, fees, hostel rules, the academic calendar, and document verification.
+          </p>
+<!-- Clean Feature Tags -->
+<div class="mt-6 pt-6 border-t border-slate-100 flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium">
+<span class="material-symbols-outlined text-indigo-600 text-[16px]">document_scanner</span>
+              Document Verification
+            </span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium">
+<span class="material-symbols-outlined text-indigo-600 text-[16px]">rule</span>
+              Review Queue
+            </span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium">
+<span class="material-symbols-outlined text-indigo-600 text-[16px]">edit_note</span>
+              Data &amp; KB Editor
+            </span>
+</div>
+</div>
+<!-- Action CTA -->
+<div class="mt-8 pt-2">
+<a class="w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm sm:text-base shadow-sm hover:shadow-md hover:shadow-slate-900/20 active:scale-[0.99] transition-all" id="linkOfficePortal" href="/admin">
+<span class="">Open Office Desk</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- How It Works Section (3-step lightweight row) -->
+<section class="w-full bg-white rounded-2xl border border-slate-200 p-8 sm:p-10 mb-8" id="how-it-works">
+<div class="text-center max-w-xl mx-auto mb-8">
+<h3 class="text-xl sm:text-2xl font-bold text-slate-900">How It Works</h3>
+<p class="text-slate-500 font-body text-sm mt-1">End-to-end aid pipeline from initial intake to final disbursement</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+<!-- Step 1 -->
+<div class="flex flex-col items-center text-center p-5 rounded-xl bg-slate-50/70 border border-slate-100">
+<div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold mb-4 shadow-sm">
+            1
+          </div>
+<h4 class="font-bold text-slate-900 text-base">Ingest Profile &amp; Documents</h4>
+<p class="font-body text-slate-600 text-xs sm:text-sm mt-2 leading-relaxed">
+            Students sync financial aid records, transcripts, and personal profile details seamlessly.
+          </p>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col items-center text-center p-5 rounded-xl bg-slate-50/70 border border-slate-100">
+<div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold mb-4 shadow-sm">
+            2
+          </div>
+<h4 class="font-bold text-slate-900 text-base">AI Verifies &amp; Flags Issues</h4>
+<p class="font-body text-slate-600 text-xs sm:text-sm mt-2 leading-relaxed">
+            Algorithms analyze criteria, auto-score eligibility, and highlight anomalies for quick human sign-off.
+          </p>
+</div>
+<!-- Step 3 -->
+<div class="flex flex-col items-center text-center p-5 rounded-xl bg-slate-50/70 border border-slate-100">
+<div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold mb-4 shadow-sm">
+            3
+          </div>
+<h4 class="font-bold text-slate-900 text-base">Fast-Tracked Aid Awards</h4>
+<p class="font-body text-slate-600 text-xs sm:text-sm mt-2 leading-relaxed">
+            Approved packages trigger instant student notifications and direct fund allocations.
+          </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Clean, Lightweight Footer -->
+<footer class="w-full bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 font-body">
+<div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+<span>Nimbus • Helping first-year students with scholarships, fees, hostel, the academic calendar and general questions</span>
+<div class="flex items-center gap-4 text-slate-600 font-medium">
+<span>by AI ClaN</span>
+</div>
+</div>
+</footer>
+
+
+</body></html>
